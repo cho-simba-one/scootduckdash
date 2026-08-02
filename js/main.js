@@ -1,0 +1,46 @@
+// Bootstrap: wires up the canvas, translates raw mouse events into game
+// logical coordinates (the canvas is scaled by CSS to fit any screen --
+// including a phone-shaped one later), and runs the animation loop.
+
+import { GAME_WIDTH, GAME_HEIGHT } from './constants.js';
+import { Game } from './game.js';
+import { isInsideButton } from './titleScreen.js';
+
+const canvas = document.getElementById('game-canvas');
+canvas.width = GAME_WIDTH;
+canvas.height = GAME_HEIGHT;
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+const game = new Game(ctx);
+
+function canvasPosFromEvent(evt) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+  const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+  return {
+    x: (clientX - rect.left) * (GAME_WIDTH / rect.width),
+    y: (clientY - rect.top) * (GAME_HEIGHT / rect.height),
+  };
+}
+
+canvas.addEventListener('mousemove', (evt) => {
+  const { x, y } = canvasPosFromEvent(evt);
+  game.handleMouseMove(x, y);
+  canvas.style.cursor = isInsideButton(x, y) ? 'pointer' : 'default';
+});
+
+canvas.addEventListener('click', (evt) => {
+  const { x, y } = canvasPosFromEvent(evt);
+  game.handleClick(x, y);
+});
+
+let lastTime = performance.now();
+function frame(now) {
+  const dtMs = Math.min(now - lastTime, 50); // clamp so a tab-switch stall can't cause a physics blowup
+  lastTime = now;
+  game.update(dtMs, now);
+  game.render(now);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);

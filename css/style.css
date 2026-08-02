@@ -1,0 +1,31 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #101418;
+  overflow: hidden;
+  font-family: 'Press Start 2P', monospace;
+}
+
+#game-frame {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The canvas keeps its native 480x270 (16:9) aspect ratio and scales up
+   to fill whatever screen it's on -- desktop window or a phone in
+   landscape -- while staying crisp (no smoothing, integer-ish scaling
+   handled by the browser is close enough for a demo). */
+#game-canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  aspect-ratio: 480 / 270;
+  width: min(100vw, 177.78vh);
+  height: min(100vh, 56.25vw);
+  border: 4px solid #000;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
+  cursor: default;
+}
