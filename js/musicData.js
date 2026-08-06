@@ -2,13 +2,12 @@
 // synth engine (music.js) so "what the song IS" and "how notes get played"
 // don't tangle -- change the tune here without touching audio-engine code.
 //
-// Vibe brief: driving, pulsing minor-key arpeggio backbone (a nod to Knight
-// Rider's iconic synth ostinato) under a bouncy, memorable chiptune hook on
-// top (the Mario-World-ish catchy part) -- but original, not a cover of
-// either. A minor, 150 BPM, propulsive 8th-note hi-hats for that "cruising
-// down the road" pulse.
+// Vibe brief (v2, softened per feedback -- the original was a fast pulsing
+// arpeggio + drums and it read as loud/harsh): a slow, gentle quarter-note
+// bass-and-pad backing in A minor, mellow enough to sit *under* the spoken
+// lyrics (see lyrics.js) instead of competing with them. No drums. 100 BPM.
 
-export const BPM = 150;
+export const BPM = 100;
 
 // One "step" = one 16th note. Everything below is indexed in 16th steps.
 export const STEP_SECONDS = 60 / BPM / 4;
@@ -25,27 +24,24 @@ export function noteFreq(name) {
   return name ? NOTE_FREQ[name] ?? null : null;
 }
 
-// --- Bass ostinato: 1 bar (16 steps), loops continuously underneath ------
-// Fast pulsing arpeggio across the A-minor triad -- the "driving synth"
-// backbone the whole track rides on.
+// --- Bass pad: 1 bar (16 steps), loops continuously underneath -----------
+// Slow quarter notes swaying through the A-minor triad -- calm, not driving.
 export const BASS_PATTERN = [
-  'A3', 'C4', 'E4', 'A4', 'E4', 'C4', 'A3', 'C4',
-  'E4', 'A4', 'E4', 'C4', 'A3', 'E4', 'C4', 'A3',
+  'A3', null, null, null,
+  'C4', null, null, null,
+  'E4', null, null, null,
+  'C4', null, null, null,
 ];
 
-// --- Lead hook: 2 bars (32 steps), the memorable melodic riff on top -----
-// 8th-note rhythm (only even step indices carry a note) so it breathes
-// against the busier 16th-note bass pulse instead of turning to mush.
+// --- Lead pad: 2 bars (32 steps), a soft melodic drift on top ------------
+// Also quarter notes -- gentle and spacious, leaving plenty of room for the
+// spoken lyrics to be the thing you actually notice.
 export const MELODY_PATTERN = [
-  'E5', null, 'D5', null, 'C5', null, 'D5', null,
-  'E5', null, 'E5', null, 'E5', null, null, null,
-  'D5', null, 'D5', null, 'D5', null, null, null,
-  'C5', null, 'D5', null, 'E5', null, 'C5', null,
+  'E5', null, null, null, 'D5', null, null, null,
+  'C5', null, null, null, 'D5', null, null, null,
+  'E5', null, null, null, 'D5', null, null, null,
+  'C5', null, null, null, null, null, null, null,
 ];
-
-// --- Drums: 1 bar (16 steps) --------------------------------------------
-export const KICK_STEPS = [0, 4, 8, 12];
-export const HAT_STEPS = [0, 2, 4, 6, 8, 10, 12, 14];
 
 // --- One-shot stingers (state-transition jingles, not looped) ------------
 // Simple ascending/descending runs -- (note, stepsLong) pairs so each note

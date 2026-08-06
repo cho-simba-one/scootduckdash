@@ -8,26 +8,27 @@
 // little window of upcoming notes slightly ahead of real time, on a fast
 // timer) so playback stays tight even though setTimeout/setInterval alone
 // are too jittery for music -- see Chris Wilson's "A Tale of Two Clocks".
+//
+// v2: softened per feedback (was too loud/harsh) -- triangle waves instead
+// of square/sawtooth, a gentle lowpass filter on the master bus to round
+// off harsh digital overtones, no drums, and a quieter master volume.
 
-import {
-  STEP_SECONDS, noteFreq, BASS_PATTERN, MELODY_PATTERN,
-  KICK_STEPS, HAT_STEPS, VICTORY_JINGLE, GAMEOVER_JINGLE,
-} from './musicData.js';
+import { STEP_SECONDS, noteFreq, BASS_PATTERN, MELODY_PATTERN, VICTORY_JINGLE, GAMEOVER_JINGLE } from './musicData.js';
 
 const LOOKAHEAD_MS = 25;
 const SCHEDULE_AHEAD_SEC = 0.1;
-const MASTER_VOLUME = 0.45;
+const MASTER_VOLUME = 0.32;
 const MUTE_STORAGE_KEY = 'duckDashMuted';
 
-function playTone(ctx, dest, freq, startTime, duration, { type = 'square', gain = 0.15 } = {}) {
+function playTone(ctx, dest, freq, startTime, duration, { type = 'triangle', gain = 0.1 } = {}) {
   if (!freq) return; // rest
   const osc = ctx.createOscillator();
   osc.type = type;
   osc.frequency.setValueAtTime(freq, startTime);
 
   const g = ctx.createGain();
-  const attack = 0.005;
-  const release = Math.min(0.05, duration * 0.4);
+  const attack = 0.02; // slightly softer attack than a pluck -- more "pad", less "poke"
+  const release = Math.min(0.12, duration * 0.4);
   g.gain.setValueAtTime(0, startTime);
   g.gain.linearRampToValueAtTime(gain, startTime + attack);
   g.gain.setValueAtTime(gain, Math.max(startTime + attack, startTime + duration - release));
@@ -36,42 +37,6 @@ function playTone(ctx, dest, freq, startTime, duration, { type = 'square', gain 
   osc.connect(g).connect(dest);
   osc.start(startTime);
   osc.stop(startTime + duration + 0.02);
-}
-
-function playKick(ctx, dest, startTime) {
-  const osc = ctx.createOscillator();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(150, startTime);
-  osc.frequency.exponentialRampToValueAtTime(40, startTime + 0.12);
-
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(0.6, startTime);
-  g.gain.exponentialRampToValueAtTime(0.001, startTime + 0.15);
-
-  osc.connect(g).connect(dest);
-  osc.start(startTime);
-  osc.stop(startTime + 0.16);
-}
-
-function playHat(ctx, dest, startTime) {
-  const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * 0.05));
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-
-  const noise = ctx.createBufferSource();
-  noise.buffer = buffer;
-  const hp = ctx.createBiquadFilter();
-  hp.type = 'highpass';
-  hp.frequency.value = 7000;
-
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(0.25, startTime);
-  g.gain.exponentialRampToValueAtTime(0.001, startTime + 0.05);
-
-  noise.connect(hp).connect(g).connect(dest);
-  noise.start(startTime);
-  noise.stop(startTime + 0.06);
 }
 
 class MusicPlayer {
@@ -95,7 +60,15 @@ class MusicPlayer {
       this.ctx = new AudioCtx();
       this.master = this.ctx.createGain();
       this.master.gain.value = this.muted ? 0 : MASTER_VOLUME;
-      this.master.connect(this.ctx.destination);
+
+      // Gentle lowpass so the synth reads as mellow/rounded instead of
+      // buzzy -- this is most of what "make it softer" actually meant.
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 2200;
+      filter.Q.value = 0.7;
+
+      this.master.connect(filter).connect(this.ctx.destination);
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();
   }
@@ -135,21 +108,17 @@ class MusicPlayer {
 
   scheduleStep(step, time) {
     const bar16 = step % BASS_PATTERN.length;
+    const beatSeconds = STEP_SECONDS * 4; // a "step" here lands on quarter notes
 
     const bassNote = BASS_PATTERN[bar16];
-    playTone(this.ctx, this.master, noteFreq(bassNote), time, STEP_SECONDS * 0.9, {
-      type: 'sawtooth', gain: 0.12,
+    playTone(this.ctx, this.master, noteFreq(bassNote), time, beatSeconds * 0.92, {
+      type: 'triangle', gain: 0.10,
     });
 
     const leadNote = MELODY_PATTERN[step];
-    if (leadNote) {
-      playTone(this.ctx, this.master, noteFreq(leadNote), time, STEP_SECONDS * 1.8, {
-        type: 'square', gain: 0.14,
-      });
-    }
-
-    if (KICK_STEPS.includes(bar16)) playKick(this.ctx, this.master, time);
-    if (HAT_STEPS.includes(bar16)) playHat(this.ctx, this.master, time);
+    playTone(this.ctx, this.master, noteFreq(leadNote), time, beatSeconds * 0.85, {
+      type: 'triangle', gain: 0.08,
+    });
   }
 
   /** Plays a short one-shot jingle (victory/game-over stinger) layered on
@@ -160,7 +129,7 @@ class MusicPlayer {
     for (const [note, steps] of notes) {
       const duration = steps * STEP_SECONDS;
       playTone(this.ctx, this.master, noteFreq(note), t, duration * 0.95, {
-        type: 'triangle', gain: 0.22,
+        type: 'triangle', gain: 0.16,
       });
       t += duration;
     }

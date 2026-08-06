@@ -11,6 +11,7 @@ import { createLevel } from './level.js';
 import { renderSky, renderBackground, renderTerrain, renderGoal } from './background.js';
 import * as titleScreen from './titleScreen.js';
 import { Music } from './music.js';
+import { Lyrics } from './lyrics.js';
 
 const RESTART_BUTTON = { x: GAME_WIDTH / 2 - 90, y: 160, width: 180, height: 40 };
 const MUTE_BUTTON = { x: GAME_WIDTH - 34, y: 8, width: 26, height: 22 };
@@ -34,6 +35,8 @@ export class Game {
     this.projectiles = [];
     this.state = STATE.PLAYING;
     Music.start(); // no-op if already playing -- safe to call on every (re)start
+    Lyrics.setMuted(Music.muted);
+    Lyrics.start(); // no-op if already playing
   }
 
   backToTitle() {
@@ -46,7 +49,8 @@ export class Game {
 
   handleClick(mx, my) {
     if (insideRect(mx, my, MUTE_BUTTON)) {
-      Music.toggleMute();
+      const muted = Music.toggleMute();
+      Lyrics.setMuted(muted);
       return;
     }
     if (this.state === STATE.TITLE && titleScreen.isInsideButton(mx, my)) {
