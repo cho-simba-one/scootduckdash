@@ -13,7 +13,7 @@ import * as titleScreen from './titleScreen.js';
 
 const RESTART_BUTTON = { x: GAME_WIDTH / 2 - 90, y: 160, width: 180, height: 40 };
 
-const STATE = { TITLE: 'TITLE', PLAYING: 'PLAYING', WIN: 'WIN', GAMEOVER: 'GAMEOVER' };
+export const STATE = { TITLE: 'TITLE', PLAYING: 'PLAYING', WIN: 'WIN', GAMEOVER: 'GAMEOVER' };
 
 export class Game {
   constructor(ctx) {

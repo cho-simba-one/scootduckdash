@@ -1,7 +1,7 @@
 // Duck Scooter Dash - offline app-shell cache.
 // Bump CACHE_NAME any time file contents change so clients pick up updates
 // instead of being stuck on a stale cached copy.
-const CACHE_NAME = 'duck-scooter-dash-v1';
+const CACHE_NAME = 'duck-scooter-dash-v2';
 
 const APP_SHELL = [
   './',
@@ -21,6 +21,7 @@ const APP_SHELL = [
   './js/projectile.js',
   './js/sprites.js',
   './js/titleScreen.js',
+  './js/touchControls.js',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
 ];

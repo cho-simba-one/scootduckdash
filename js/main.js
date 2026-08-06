@@ -3,8 +3,9 @@
 // including a phone-shaped one later), and runs the animation loop.
 
 import { GAME_WIDTH, GAME_HEIGHT } from './constants.js';
-import { Game } from './game.js';
+import { Game, STATE } from './game.js';
 import { isInsideButton } from './titleScreen.js';
+import { setupTouchControls } from './touchControls.js';
 
 const canvas = document.getElementById('game-canvas');
 canvas.width = GAME_WIDTH;
@@ -13,6 +14,7 @@ const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
 const game = new Game(ctx);
+const touchControls = setupTouchControls();
 
 function canvasPosFromEvent(evt) {
   const rect = canvas.getBoundingClientRect();
@@ -41,6 +43,7 @@ function frame(now) {
   lastTime = now;
   game.update(dtMs, now);
   game.render(now);
+  touchControls.setVisible(game.state === STATE.PLAYING);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

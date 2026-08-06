@@ -29,3 +29,69 @@ html, body {
   box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
   cursor: default;
 }
+
+/* --- On-screen touch controls (phones/tablets only -- see touchControls.js,
+   which only injects this DOM at all on touch-capable devices) ------------ */
+#touch-controls {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 4vw calc(4vw + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+  z-index: 10;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#touch-controls.hidden {
+  display: none;
+}
+
+.tc-cluster {
+  display: flex;
+  gap: 14px;
+  pointer-events: auto;
+}
+
+.tc-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.55);
+  background: rgba(20, 24, 28, 0.45);
+  color: #fff;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  padding: 0;
+}
+
+.tc-btn.active {
+  background: rgba(255, 210, 63, 0.75);
+  border-color: #ffd23f;
+}
+
+.tc-move {
+  align-items: center;
+}
+
+.tc-actions {
+  align-items: flex-end;
+}
+
+.tc-jump-btn {
+  width: 72px;
+  height: 72px;
+  font-size: 26px;
+}
+
+.tc-duck-btn,
+.tc-shoot-btn {
+  align-self: flex-start;
+}

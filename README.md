@@ -9,11 +9,11 @@ Cordova/Capacitor later for an actual app store build).
 
 - Title screen with mouse-clickable START button
 - One farmyard level: farmhouse, barn, pond, background dogs & geese
-- Player controls (keyboard, arrow keys only):
-  - Left / Right — move
-  - Up — jump
-  - Down — duck
-  - Space — shoot propeller projectile (unlimited ammo)
+- Player controls:
+  - Keyboard: Left / Right move, Up jump, Down duck, Space shoot
+  - Touch (phones/tablets): on-screen buttons auto-appear on any touch-capable
+    device once you tap START -- left/right pad, plus jump/duck/shoot buttons.
+    Same underlying input state as the keyboard, so both work simultaneously.
 - Enemies: frogs that hop between lily pads and shoot their tongue as a
   ranged attack. Stomp them from above (Mario-style) OR snipe them with a
   propeller shot to neutralize.
@@ -50,6 +50,7 @@ assets/images/        generated pixel-art sprites & backgrounds
 
 - Power-ups (speed boost, shield/star invincibility)
 - More levels / world map
-- Touch controls for real mobile build
 - Sound effects & music
 - Score / lives / HUD polish
+- Real native APK/.exe build (Capacitor/Electron) -- needs Node.js + Android
+  SDK/Java toolchain, not installed in this project's dev environment yet
