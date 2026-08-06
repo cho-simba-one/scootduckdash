@@ -19,12 +19,13 @@ Cordova/Capacitor later for an actual app store build).
   propeller shot to neutralize.
 - Original instrumental soundtrack, synthesized live in the browser via the
   Web Audio API (no audio files -- same "everything's procedurally generated"
-  philosophy as the pixel art). 80s-getaway-driver/Knight-Rider vibe: a
-  driving sawtooth arpeggio bass (root/fifth pulse) through a dark lowpass
-  filter for warmth, a quiet sustained pad wash for atmosphere, and a soft
-  kick pulse -- deliberately no melodic hook riding on top. The main theme
-  stops the instant you win or lose, replaced by a short victory/game-over
-  jingle. Press M or tap the on-screen note-icon button to mute.
+  philosophy as the pixel art). "Hacker techno" vibe: cold square-wave bass
+  pulse that dips into a dissonant minor-second neighbor tone for tension,
+  sparse irregular digital "data blip" hits, a deep sub-bass drone, and
+  occasional glitchy clicks instead of a steady beat -- deliberately sparse
+  and tense, not upbeat or melodic. The main theme stops the instant you win
+  or lose, replaced by a short victory/game-over jingle. Press M or tap the
+  on-screen note-icon button to mute.
 - Simple platforming physics (gravity, ground/platform collision)
 
 ## Run it

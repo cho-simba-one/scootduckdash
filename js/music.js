@@ -9,24 +9,22 @@
 // timer) so playback stays tight even though setTimeout/setInterval alone
 // are too jittery for music -- see Chris Wilson's "A Tale of Two Clocks".
 //
-// v4: full "80s getaway driver techno" -- sawtooth bass (the actual analog
-// synth texture that vibe needs) run through a fairly dark lowpass filter
-// so it stays warm/driving instead of buzzy, a quiet sustained pad wash for
-// atmosphere, and a soft kick pulse. Deliberately no melodic hook riding on
-// top -- that's what kept reading as a cute nursery tune no matter how the
-// bass underneath sounded.
+// v5: total rewrite for "hacker techno" -- cold square-wave bass pulse (not
+// a warm analog sawtooth), sparse irregular digital "blip" hits, a deep
+// sine sub-drone, and occasional glitchy clicks instead of a kick pattern
+// you'd nod along to. Deliberately sparse/cold, not driving/upbeat.
 
 import {
-  STEP_SECONDS, noteFreq, BASS_PATTERN, PAD_CHORD, KICK_STEPS, LOOP_STEPS,
-  VICTORY_JINGLE, GAMEOVER_JINGLE,
+  STEP_SECONDS, noteFreq, BASS_PATTERN, BLIP_PATTERN, DRONE_NOTE,
+  CLICK_STEPS, LOOP_STEPS, VICTORY_JINGLE, GAMEOVER_JINGLE,
 } from './musicData.js';
 
 const LOOKAHEAD_MS = 25;
 const SCHEDULE_AHEAD_SEC = 0.1;
-const MASTER_VOLUME = 0.38;
+const MASTER_VOLUME = 0.32;
 const MUTE_STORAGE_KEY = 'duckDashMuted';
 
-function playTone(ctx, dest, freq, startTime, duration, { type = 'triangle', gain = 0.1 } = {}) {
+function playTone(ctx, dest, freq, startTime, duration, { type = 'sine', gain = 0.1 } = {}) {
   if (!freq) return; // rest
   const osc = ctx.createOscillator();
   osc.type = type;
@@ -45,19 +43,28 @@ function playTone(ctx, dest, freq, startTime, duration, { type = 'triangle', gai
   osc.stop(startTime + duration + 0.02);
 }
 
-function playKick(ctx, dest, startTime) {
-  const osc = ctx.createOscillator();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(130, startTime);
-  osc.frequency.exponentialRampToValueAtTime(45, startTime + 0.14);
+/** Short, sparse percussive tick -- texture/glitch, not a kick you'd feel
+ * in your chest. Filtered noise burst, very brief. */
+function playClick(ctx, dest, startTime) {
+  const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * 0.03));
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 2500;
+  bp.Q.value = 1.2;
 
   const g = ctx.createGain();
-  g.gain.setValueAtTime(0.4, startTime);
-  g.gain.exponentialRampToValueAtTime(0.001, startTime + 0.16);
+  g.gain.setValueAtTime(0.18, startTime);
+  g.gain.exponentialRampToValueAtTime(0.001, startTime + 0.03);
 
-  osc.connect(g).connect(dest);
-  osc.start(startTime);
-  osc.stop(startTime + 0.18);
+  noise.connect(bp).connect(g).connect(dest);
+  noise.start(startTime);
+  noise.stop(startTime + 0.04);
 }
 
 class MusicPlayer {
@@ -82,12 +89,13 @@ class MusicPlayer {
       this.master = this.ctx.createGain();
       this.master.gain.value = this.muted ? 0 : MASTER_VOLUME;
 
-      // A darker lowpass than a plain "make it softer" pass would use --
-      // this is what tames a sawtooth into warm analog-synth territory
-      // instead of a harsh buzz, while still keeping its edge/character.
+      // Brighter than the previous darker filter -- the cold square-wave
+      // bass and digital blips need some top-end to read as "digital"
+      // rather than muffled, but this is still enough to round off the
+      // harshest edges.
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.value = 1800;
+      filter.frequency.value = 2600;
       filter.Q.value = 0.7;
 
       this.master.connect(filter).connect(this.ctx.destination);
@@ -129,23 +137,28 @@ class MusicPlayer {
   }
 
   scheduleStep(step, time) {
+    // Cold, colorless square wave for the bass pulse -- deliberately not the
+    // warm analog sawtooth from earlier attempts. Digital, not driving.
     const bassNote = BASS_PATTERN[step];
-    playTone(this.ctx, this.master, noteFreq(bassNote), time, STEP_SECONDS * 0.85, {
-      type: 'sawtooth', gain: 0.15,
+    playTone(this.ctx, this.master, noteFreq(bassNote), time, STEP_SECONDS * 1.6, {
+      type: 'square', gain: 0.09,
     });
 
-    // Sustained pad chord, retriggered once per bar -- pure atmosphere,
-    // no melody to notice or hum.
+    // Sparse irregular "data processing" hits, high and short.
+    const blipNote = BLIP_PATTERN[step];
+    playTone(this.ctx, this.master, noteFreq(blipNote), time, STEP_SECONDS * 0.7, {
+      type: 'square', gain: 0.06,
+    });
+
+    // Deep sub-drone, retriggered once per bar, held almost the whole loop.
     if (step === 0) {
-      const padDuration = STEP_SECONDS * LOOP_STEPS * 0.95;
-      for (const note of PAD_CHORD) {
-        playTone(this.ctx, this.master, noteFreq(note), time, padDuration, {
-          type: 'triangle', gain: 0.05,
-        });
-      }
+      const droneDuration = STEP_SECONDS * LOOP_STEPS * 0.95;
+      playTone(this.ctx, this.master, noteFreq(DRONE_NOTE), time, droneDuration, {
+        type: 'sine', gain: 0.10,
+      });
     }
 
-    if (KICK_STEPS.includes(step)) playKick(this.ctx, this.master, time);
+    if (CLICK_STEPS.includes(step)) playClick(this.ctx, this.master, time);
   }
 
   /** Plays a short one-shot jingle (victory/game-over stinger) layered on
