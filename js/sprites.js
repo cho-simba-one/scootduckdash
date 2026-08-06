@@ -10,65 +10,67 @@ function patchRows(base, patches) {
   return grid;
 }
 
-// ---- Duck-on-scooter (hero) -------------------------------------------
+// ---- Duck-on-scooter (hero) ---------------------------------------------
+// A deliberately SMALL duck riding a properly-proportioned kick scooter:
+// flat low deck, a real steering column rising to a T-handlebar (not just
+// a skateboard), and small close-set wheels. The duck's wing reaches out
+// (the diagonal 'y'/'s' pixels around the bill) to visually connect it to
+// the grip instead of looking like two unrelated shapes stacked together.
 export const DUCK_IDLE = [
-  '......rrrr........',
-  '.....rkkkkr.......',
-  '......bbbb.........',
-  '.....bbbbbb.......',
-  '....bkkkkkkb......',
-  '.....yyyyyy.......',
-  '....yYYYYYYy......',
-  '....yYkYYYYy.o....',
-  '....yYYYYYYyooo...',
-  '....yyyyyyyyoo....',
-  '...yyyyyyyyyy.....',
-  '..yyyyyyyyyyyy....',
-  '..yYYYYYYYYYYy....',
-  '..yyyyyyyyyyyy....',
-  '..yyoyyyyyyoyy....',
-  '...yyyyyyyyyy.....',
-  '....oo....oo......',
-  '....kk....kk......',
-  '...dddddddddddd...',
-  '...d..........d...',
-  '..s............s..',
-  '..s............s..',
+  '....rrrr............',
+  '.....rkkr...........',
+  '....bbbbbb...........',
+  '...bkkkkkkb..........',
+  '...yYYYYYYy..........',
+  '...yYkYYYYy.o..kkkkk.',
+  '...yYYYYYYyooo.yss...',
+  '..yyyyyyyyyoo...ys...',
+  '.yyyyyyyyyyyy...s....',
+  '.yYYYYYYYYYYy...s....',
+  '.yyoyyyyyyoyy...s....',
+  '..oo....oo......s....',
+  '..kk....kk......s....',
+  '.ssssssssssssssssss..',
+  '.s................s..',
+  '..k..............k..',
+  '..k..............k..',
 ];
 
 export const DUCK_RUN1 = patchRows(DUCK_IDLE, {
-  16: '...oo......oo.....',
-  17: '...kk......kk.....',
+  11: '.oo.......oo....s....',
+  12: '.kk.......kk....s....',
 });
 
 export const DUCK_RUN2 = patchRows(DUCK_IDLE, {
-  16: '.....oo..oo.......',
-  17: '.....kk..kk.......',
+  11: '...oo...oo......s....',
+  12: '...kk...kk......s....',
 });
 
 export const DUCK_JUMP = patchRows(DUCK_IDLE, {
-  15: '...yyyoooyyy......',
-  16: '.................',
-  17: '.................',
+  10: '.yyoooooooyy....s....',
+  11: '................s....',
+  12: '................s....',
 });
 
 // Shorter overall silhouette for ducking -- also used for the smaller
-// hitbox height in player.js.
+// hitbox height in player.js. Crouched low enough that the rider's head
+// ends up right about at handlebar height.
 export const DUCK_DUCK = [
-  '.....rrrr.........',
-  '....rkkkkr........',
-  '.....bbbbbb........',
-  '....bkkkkkkb......',
-  '...yYYYYYYYYy.....',
-  '...yYkYYYYYYy.o...',
-  '..yyyyyyyyyyyyooo.',
-  '..yYYYYYYYYYYYyoo.',
-  '..yyyyyyyyyyyyy...',
-  '.oo....oo.........',
-  '.kk....kk.........',
-  'dddddddddddddd....',
-  'd............d....',
-  's............s....',
+  '....rrrr............',
+  '...rkkkr............',
+  '...bbbbbb............',
+  '..bkkkkkkb...kkkkk...',
+  '..yYYYYYYYy..yss.....',
+  '..yYkYYYYYy.o.ys.....',
+  '.yyyyyyyyyyyooo.s....',
+  '.yYYYYYYYYYYyoo.s....',
+  '.yyyyyyyyyyyyy..s....',
+  '.oo....oo.......s....',
+  '.kk....kk.......s....',
+  'ssssssssssssssssss..',
+  's................s..',
+  '.k..............k...',
+  '.k..............k...',
 ];
 
 // ---- Propeller projectile ----------------------------------------------

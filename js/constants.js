@@ -16,9 +16,9 @@ export const PLAYER_DUCK_MAX_SPEED = 1.2;
 export const PLAYER_JUMP_VELOCITY = -9.6;
 export const PLAYER_STOMP_BOUNCE = -6.5;
 
-export const PLAYER_WIDTH = 30;
-export const PLAYER_HEIGHT = 34;
-export const PLAYER_DUCK_HEIGHT = 22;
+export const PLAYER_WIDTH = 26;
+export const PLAYER_HEIGHT = 30;
+export const PLAYER_DUCK_HEIGHT = 20;
 
 export const PLAYER_MAX_HEARTS = 3;
 export const PLAYER_INVINCIBLE_MS = 1400;
@@ -55,7 +55,6 @@ export const PALETTE = {
   b: '#3a86ff', // blue (hat)
   g: '#2a9d3f', // scooter deck green
   s: '#8d99ae', // scooter steel grey
-  d: '#5c3d2e', // wood brown
   G: '#4caf50', // frog green
   F: '#357a38', // frog dark green
   p: '#ffb6c1', // tongue pink
