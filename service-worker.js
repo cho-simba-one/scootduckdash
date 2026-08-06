@@ -1,7 +1,7 @@
 // Duck Scooter Dash - offline app-shell cache.
 // Bump CACHE_NAME any time file contents change so clients pick up updates
 // instead of being stuck on a stale cached copy.
-const CACHE_NAME = 'duck-scooter-dash-v4';
+const CACHE_NAME = 'duck-scooter-dash-v5';
 
 const APP_SHELL = [
   './',
@@ -24,7 +24,6 @@ const APP_SHELL = [
   './js/touchControls.js',
   './js/music.js',
   './js/musicData.js',
-  './js/lyrics.js',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
 ];
@@ -47,24 +46,25 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Cache-first for the app shell, falling back to network (and caching what
-// we fetch) for anything else -- e.g. the Google Font, which we don't want
-// to force-cache since it's a third-party resource that can change.
+// Network-first, falling back to cache only when offline. This is the
+// opposite of what most PWA tutorials show (cache-first), on purpose --
+// this game is under active development and cache-first meant anyone who'd
+// loaded it once before an update would get stuck on stale files until an
+// awkward double-reload cleared it. Network-first means: online (the
+// common case) always gets the current build; offline still works because
+// whatever was last fetched successfully gets cached as a fallback.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
-        .then((response) => {
-          if (response.ok && event.request.url.startsWith(self.location.origin)) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached);
-    })
+    fetch(event.request)
+      .then((response) => {
+        if (response.ok && event.request.url.startsWith(self.location.origin)) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

@@ -2,12 +2,14 @@
 // synth engine (music.js) so "what the song IS" and "how notes get played"
 // don't tangle -- change the tune here without touching audio-engine code.
 //
-// Vibe brief (v2, softened per feedback -- the original was a fast pulsing
-// arpeggio + drums and it read as loud/harsh): a slow, gentle quarter-note
-// bass-and-pad backing in A minor, mellow enough to sit *under* the spoken
-// lyrics (see lyrics.js) instead of competing with them. No drums. 100 BPM.
+// Vibe brief (v3): back to the driving, pulsing minor-key arpeggio backbone
+// (the Knight-Rider-esque bass ostinato from v1 -- Captain liked that one)
+// under a catchy chiptune lead hook, upbeat and energetic. Softer than v1's
+// timbre though (triangle waves + a lowpass filter in music.js, not raw
+// square/sawtooth) so it stays punchy without being harsh. No drums, no
+// spoken lyrics -- just an instrumental, upbeat and "involved" bassline.
 
-export const BPM = 100;
+export const BPM = 140;
 
 // One "step" = one 16th note. Everything below is indexed in 16th steps.
 export const STEP_SECONDS = 60 / BPM / 4;
@@ -24,23 +26,22 @@ export function noteFreq(name) {
   return name ? NOTE_FREQ[name] ?? null : null;
 }
 
-// --- Bass pad: 1 bar (16 steps), loops continuously underneath -----------
-// Slow quarter notes swaying through the A-minor triad -- calm, not driving.
+// --- Bass ostinato: 1 bar (16 steps), loops continuously underneath ------
+// Fast pulsing arpeggio across the A-minor triad -- the driving backbone
+// the whole track rides on.
 export const BASS_PATTERN = [
-  'A3', null, null, null,
-  'C4', null, null, null,
-  'E4', null, null, null,
-  'C4', null, null, null,
+  'A3', 'C4', 'E4', 'A4', 'E4', 'C4', 'A3', 'C4',
+  'E4', 'A4', 'E4', 'C4', 'A3', 'E4', 'C4', 'A3',
 ];
 
-// --- Lead pad: 2 bars (32 steps), a soft melodic drift on top ------------
-// Also quarter notes -- gentle and spacious, leaving plenty of room for the
-// spoken lyrics to be the thing you actually notice.
+// --- Lead hook: 2 bars (32 steps), the memorable melodic riff on top -----
+// 8th-note rhythm (only even step indices carry a note) so it breathes
+// against the busier 16th-note bass pulse instead of turning to mush.
 export const MELODY_PATTERN = [
-  'E5', null, null, null, 'D5', null, null, null,
-  'C5', null, null, null, 'D5', null, null, null,
-  'E5', null, null, null, 'D5', null, null, null,
-  'C5', null, null, null, null, null, null, null,
+  'E5', null, 'D5', null, 'C5', null, 'D5', null,
+  'E5', null, 'E5', null, 'E5', null, null, null,
+  'D5', null, 'D5', null, 'D5', null, null, null,
+  'C5', null, 'D5', null, 'E5', null, 'C5', null,
 ];
 
 // --- One-shot stingers (state-transition jingles, not looped) ------------

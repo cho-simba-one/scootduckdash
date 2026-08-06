@@ -9,15 +9,16 @@
 // timer) so playback stays tight even though setTimeout/setInterval alone
 // are too jittery for music -- see Chris Wilson's "A Tale of Two Clocks".
 //
-// v2: softened per feedback (was too loud/harsh) -- triangle waves instead
-// of square/sawtooth, a gentle lowpass filter on the master bus to round
-// off harsh digital overtones, no drums, and a quieter master volume.
+// v3: back to the driving arpeggio bassline (v1) for upbeat energy, but
+// keeping v2's softer timbre -- triangle waves instead of square/sawtooth,
+// plus a gentle lowpass filter on the master bus to round off harsh digital
+// overtones -- so it's punchy and "involved" without being harsh. No drums.
 
 import { STEP_SECONDS, noteFreq, BASS_PATTERN, MELODY_PATTERN, VICTORY_JINGLE, GAMEOVER_JINGLE } from './musicData.js';
 
 const LOOKAHEAD_MS = 25;
 const SCHEDULE_AHEAD_SEC = 0.1;
-const MASTER_VOLUME = 0.32;
+const MASTER_VOLUME = 0.36;
 const MUTE_STORAGE_KEY = 'duckDashMuted';
 
 function playTone(ctx, dest, freq, startTime, duration, { type = 'triangle', gain = 0.1 } = {}) {
@@ -108,16 +109,15 @@ class MusicPlayer {
 
   scheduleStep(step, time) {
     const bar16 = step % BASS_PATTERN.length;
-    const beatSeconds = STEP_SECONDS * 4; // a "step" here lands on quarter notes
 
     const bassNote = BASS_PATTERN[bar16];
-    playTone(this.ctx, this.master, noteFreq(bassNote), time, beatSeconds * 0.92, {
-      type: 'triangle', gain: 0.10,
+    playTone(this.ctx, this.master, noteFreq(bassNote), time, STEP_SECONDS * 0.9, {
+      type: 'triangle', gain: 0.12,
     });
 
     const leadNote = MELODY_PATTERN[step];
-    playTone(this.ctx, this.master, noteFreq(leadNote), time, beatSeconds * 0.85, {
-      type: 'triangle', gain: 0.08,
+    playTone(this.ctx, this.master, noteFreq(leadNote), time, STEP_SECONDS * 1.8, {
+      type: 'triangle', gain: 0.10,
     });
   }
 

@@ -17,13 +17,14 @@ Cordova/Capacitor later for an actual app store build).
 - Enemies: frogs that hop between lily pads and shoot their tongue as a
   ranged attack. Stomp them from above (Mario-style) OR snipe them with a
   propeller shot to neutralize.
-- Original soundtrack, synthesized live in the browser via the Web Audio API
-  (no audio files -- same "everything's procedurally generated" philosophy
-  as the pixel art). A soft, mellow triangle-wave pad in A minor, plus real
-  spoken/sung lyrics ("It's a duck on a scooter, it's a Scooter Duck Dash!")
-  via the browser's built-in SpeechSynthesis API -- also zero audio files.
-  Victory/game-over jingles too. Press M or tap the on-screen note-icon
-  button to mute (silences both the music and the vocals).
+- Original instrumental soundtrack, synthesized live in the browser via the
+  Web Audio API (no audio files -- same "everything's procedurally generated"
+  philosophy as the pixel art). An upbeat, driving arpeggio bassline in A
+  minor (Knight-Rider-esque energy) with a catchy chiptune lead hook on top,
+  using soft triangle waves + a gentle lowpass filter so it stays punchy
+  without being harsh. The main theme stops the instant you win or lose,
+  replaced by a short victory/game-over jingle. Press M or tap the on-screen
+  note-icon button to mute.
 - Simple platforming physics (gravity, ground/platform collision)
 
 ## Run it
@@ -44,7 +45,6 @@ js/                   all game code (ES modules)
   touchControls.js      on-screen touch buttons (phones/tablets)
   music.js               Web Audio synth engine + step sequencer
   musicData.js            song data (notes/patterns) the engine plays
-  lyrics.js                spoken/sung lyric lines via SpeechSynthesis
   player.js                duck-scooter player entity
   projectile.js             propeller shot entity
   enemy.js                   frog enemy entity

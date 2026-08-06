@@ -32,18 +32,22 @@ export const DUCK_IDLE = [
   '..kk....kk......s....',
   '.ssssssssssssssssss..',
   '.s................s..',
-  '..k..............k..',
-  '..k..............k..',
+  '.kk..............kk.',
+  '.ks..............sk.',
 ];
 
+// Riding a scooter means one foot stays planted on the deck (fixed at
+// columns 2-3, every frame) while only the OTHER foot kicks -- not a
+// two-legs-alternating walk cycle. RUN1 = kick foot swung back for the
+// push-off, RUN2 = kick foot swung forward/up on the recovery.
 export const DUCK_RUN1 = patchRows(DUCK_IDLE, {
-  11: '.oo.......oo....s....',
-  12: '.kk.......kk....s....',
+  11: '..oo........oo..s....',
+  12: '..kk........kk..s....',
 });
 
 export const DUCK_RUN2 = patchRows(DUCK_IDLE, {
-  11: '...oo...oo......s....',
-  12: '...kk...kk......s....',
+  11: '..oo.oo.........s....',
+  12: '..kk.kk.........s....',
 });
 
 export const DUCK_JUMP = patchRows(DUCK_IDLE, {
@@ -69,8 +73,8 @@ export const DUCK_DUCK = [
   '.kk....kk.......s....',
   'ssssssssssssssssss..',
   's................s..',
-  '.k..............k...',
-  '.k..............k...',
+  'kk..............kk..',
+  'ks..............sk..',
 ];
 
 // ---- Propeller projectile ----------------------------------------------
