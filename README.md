@@ -19,12 +19,12 @@ Cordova/Capacitor later for an actual app store build).
   propeller shot to neutralize.
 - Original instrumental soundtrack, synthesized live in the browser via the
   Web Audio API (no audio files -- same "everything's procedurally generated"
-  philosophy as the pixel art). An upbeat, driving arpeggio bassline in A
-  minor (Knight-Rider-esque energy) with a catchy chiptune lead hook on top,
-  using soft triangle waves + a gentle lowpass filter so it stays punchy
-  without being harsh. The main theme stops the instant you win or lose,
-  replaced by a short victory/game-over jingle. Press M or tap the on-screen
-  note-icon button to mute.
+  philosophy as the pixel art). 80s-getaway-driver/Knight-Rider vibe: a
+  driving sawtooth arpeggio bass (root/fifth pulse) through a dark lowpass
+  filter for warmth, a quiet sustained pad wash for atmosphere, and a soft
+  kick pulse -- deliberately no melodic hook riding on top. The main theme
+  stops the instant you win or lose, replaced by a short victory/game-over
+  jingle. Press M or tap the on-screen note-icon button to mute.
 - Simple platforming physics (gravity, ground/platform collision)
 
 ## Run it

@@ -9,16 +9,21 @@
 // timer) so playback stays tight even though setTimeout/setInterval alone
 // are too jittery for music -- see Chris Wilson's "A Tale of Two Clocks".
 //
-// v3: back to the driving arpeggio bassline (v1) for upbeat energy, but
-// keeping v2's softer timbre -- triangle waves instead of square/sawtooth,
-// plus a gentle lowpass filter on the master bus to round off harsh digital
-// overtones -- so it's punchy and "involved" without being harsh. No drums.
+// v4: full "80s getaway driver techno" -- sawtooth bass (the actual analog
+// synth texture that vibe needs) run through a fairly dark lowpass filter
+// so it stays warm/driving instead of buzzy, a quiet sustained pad wash for
+// atmosphere, and a soft kick pulse. Deliberately no melodic hook riding on
+// top -- that's what kept reading as a cute nursery tune no matter how the
+// bass underneath sounded.
 
-import { STEP_SECONDS, noteFreq, BASS_PATTERN, MELODY_PATTERN, VICTORY_JINGLE, GAMEOVER_JINGLE } from './musicData.js';
+import {
+  STEP_SECONDS, noteFreq, BASS_PATTERN, PAD_CHORD, KICK_STEPS, LOOP_STEPS,
+  VICTORY_JINGLE, GAMEOVER_JINGLE,
+} from './musicData.js';
 
 const LOOKAHEAD_MS = 25;
 const SCHEDULE_AHEAD_SEC = 0.1;
-const MASTER_VOLUME = 0.36;
+const MASTER_VOLUME = 0.38;
 const MUTE_STORAGE_KEY = 'duckDashMuted';
 
 function playTone(ctx, dest, freq, startTime, duration, { type = 'triangle', gain = 0.1 } = {}) {
@@ -28,7 +33,7 @@ function playTone(ctx, dest, freq, startTime, duration, { type = 'triangle', gai
   osc.frequency.setValueAtTime(freq, startTime);
 
   const g = ctx.createGain();
-  const attack = 0.02; // slightly softer attack than a pluck -- more "pad", less "poke"
+  const attack = 0.01;
   const release = Math.min(0.12, duration * 0.4);
   g.gain.setValueAtTime(0, startTime);
   g.gain.linearRampToValueAtTime(gain, startTime + attack);
@@ -38,6 +43,21 @@ function playTone(ctx, dest, freq, startTime, duration, { type = 'triangle', gai
   osc.connect(g).connect(dest);
   osc.start(startTime);
   osc.stop(startTime + duration + 0.02);
+}
+
+function playKick(ctx, dest, startTime) {
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(130, startTime);
+  osc.frequency.exponentialRampToValueAtTime(45, startTime + 0.14);
+
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.4, startTime);
+  g.gain.exponentialRampToValueAtTime(0.001, startTime + 0.16);
+
+  osc.connect(g).connect(dest);
+  osc.start(startTime);
+  osc.stop(startTime + 0.18);
 }
 
 class MusicPlayer {
@@ -62,11 +82,12 @@ class MusicPlayer {
       this.master = this.ctx.createGain();
       this.master.gain.value = this.muted ? 0 : MASTER_VOLUME;
 
-      // Gentle lowpass so the synth reads as mellow/rounded instead of
-      // buzzy -- this is most of what "make it softer" actually meant.
+      // A darker lowpass than a plain "make it softer" pass would use --
+      // this is what tames a sawtooth into warm analog-synth territory
+      // instead of a harsh buzz, while still keeping its edge/character.
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.value = 2200;
+      filter.frequency.value = 1800;
       filter.Q.value = 0.7;
 
       this.master.connect(filter).connect(this.ctx.destination);
@@ -102,23 +123,29 @@ class MusicPlayer {
     while (this.ctx && this.nextStepTime < this.ctx.currentTime + SCHEDULE_AHEAD_SEC) {
       this.scheduleStep(this.currentStep, this.nextStepTime);
       this.nextStepTime += STEP_SECONDS;
-      this.currentStep = (this.currentStep + 1) % MELODY_PATTERN.length;
+      this.currentStep = (this.currentStep + 1) % LOOP_STEPS;
     }
     this.timerId = setTimeout(() => this.scheduler(), LOOKAHEAD_MS);
   }
 
   scheduleStep(step, time) {
-    const bar16 = step % BASS_PATTERN.length;
-
-    const bassNote = BASS_PATTERN[bar16];
-    playTone(this.ctx, this.master, noteFreq(bassNote), time, STEP_SECONDS * 0.9, {
-      type: 'triangle', gain: 0.12,
+    const bassNote = BASS_PATTERN[step];
+    playTone(this.ctx, this.master, noteFreq(bassNote), time, STEP_SECONDS * 0.85, {
+      type: 'sawtooth', gain: 0.15,
     });
 
-    const leadNote = MELODY_PATTERN[step];
-    playTone(this.ctx, this.master, noteFreq(leadNote), time, STEP_SECONDS * 1.8, {
-      type: 'triangle', gain: 0.10,
-    });
+    // Sustained pad chord, retriggered once per bar -- pure atmosphere,
+    // no melody to notice or hum.
+    if (step === 0) {
+      const padDuration = STEP_SECONDS * LOOP_STEPS * 0.95;
+      for (const note of PAD_CHORD) {
+        playTone(this.ctx, this.master, noteFreq(note), time, padDuration, {
+          type: 'triangle', gain: 0.05,
+        });
+      }
+    }
+
+    if (KICK_STEPS.includes(step)) playKick(this.ctx, this.master, time);
   }
 
   /** Plays a short one-shot jingle (victory/game-over stinger) layered on

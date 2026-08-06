@@ -2,17 +2,22 @@
 // synth engine (music.js) so "what the song IS" and "how notes get played"
 // don't tangle -- change the tune here without touching audio-engine code.
 //
-// Vibe brief (v3): back to the driving, pulsing minor-key arpeggio backbone
-// (the Knight-Rider-esque bass ostinato from v1 -- Captain liked that one)
-// under a catchy chiptune lead hook, upbeat and energetic. Softer than v1's
-// timbre though (triangle waves + a lowpass filter in music.js, not raw
-// square/sawtooth) so it stays punchy without being harsh. No drums, no
-// spoken lyrics -- just an instrumental, upbeat and "involved" bassline.
+// Vibe brief (v4): full send on "80s getaway-driver techno," Knight-Rider
+// inspired. Earlier attempts kept a bouncy pentatonic lead hook on top of
+// the arpeggio, which read as twee/cute (the "Mary Had a Little Lamb"
+// complaint) no matter how the bass underneath sounded. This version drops
+// the melodic hook entirely -- just the driving arpeggio bass, a dark
+// sustained pad wash for atmosphere, and a soft kick pulse for a techno
+// heartbeat. No "tune" to hum, just mood and drive.
 
-export const BPM = 140;
+export const BPM = 132;
 
 // One "step" = one 16th note. Everything below is indexed in 16th steps.
 export const STEP_SECONDS = 60 / BPM / 4;
+
+// The whole pattern is just 1 bar (16 steps) now -- there's no multi-bar
+// melody to justify a longer loop, and the pad/kick both retrigger every bar.
+export const LOOP_STEPS = 16;
 
 // Equal-tempered note frequencies (A4 = 440Hz) for the handful of notes this
 // tune actually uses -- a full chromatic generator would be overkill here.
@@ -26,23 +31,22 @@ export function noteFreq(name) {
   return name ? NOTE_FREQ[name] ?? null : null;
 }
 
-// --- Bass ostinato: 1 bar (16 steps), loops continuously underneath ------
-// Fast pulsing arpeggio across the A-minor triad -- the driving backbone
-// the whole track rides on.
+// --- Bass ostinato: driving 16th-note pulse, mostly bouncing between the
+// root and the fifth (A3/E4) -- that's the actual core of the Knight Rider
+// pulse, not a full triad arpeggio -- with brief passing tones for interest.
 export const BASS_PATTERN = [
-  'A3', 'C4', 'E4', 'A4', 'E4', 'C4', 'A3', 'C4',
-  'E4', 'A4', 'E4', 'C4', 'A3', 'E4', 'C4', 'A3',
+  'A3', 'E4', 'A3', 'E4', 'A3', 'C4', 'A3', 'E4',
+  'A3', 'E4', 'A3', 'E4', 'A3', 'C4', 'E4', 'A3',
 ];
 
-// --- Lead hook: 2 bars (32 steps), the memorable melodic riff on top -----
-// 8th-note rhythm (only even step indices carry a note) so it breathes
-// against the busier 16th-note bass pulse instead of turning to mush.
-export const MELODY_PATTERN = [
-  'E5', null, 'D5', null, 'C5', null, 'D5', null,
-  'E5', null, 'E5', null, 'E5', null, null, null,
-  'D5', null, 'D5', null, 'D5', null, null, null,
-  'C5', null, 'D5', null, 'E5', null, 'C5', null,
-];
+// --- Sustained pad chord: retriggered once per bar, held almost the whole
+// bar, very quiet -- pure atmosphere/wash, not a melody to notice or hum.
+export const PAD_CHORD = ['A3', 'C4', 'E4'];
+
+// --- Soft kick pulse: quarter notes, the techno "heartbeat" under the
+// arpeggio. Deliberately no hi-hats/noise percussion -- that's what read as
+// harsh before.
+export const KICK_STEPS = [0, 4, 8, 12];
 
 // --- One-shot stingers (state-transition jingles, not looped) ------------
 // Simple ascending/descending runs -- (note, stepsLong) pairs so each note
