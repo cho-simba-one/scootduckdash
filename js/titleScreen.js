@@ -73,6 +73,6 @@ export function render(ctx, nowMs) {
 
   ctx.font = "10px 'Press Start 2P', monospace";
   ctx.fillStyle = '#2a2a2a';
-  ctx.fillText('Arrows to move / jump / duck  -  Space to shoot', GAME_WIDTH / 2, GAME_HEIGHT - 14);
+  ctx.fillText('Arrows to move / jump / duck  -  Space to shoot  -  M mutes', GAME_WIDTH / 2, GAME_HEIGHT - 14);
   ctx.textAlign = 'left';
 }

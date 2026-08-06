@@ -10,8 +10,10 @@ import { Camera } from './camera.js';
 import { createLevel } from './level.js';
 import { renderSky, renderBackground, renderTerrain, renderGoal } from './background.js';
 import * as titleScreen from './titleScreen.js';
+import { Music } from './music.js';
 
 const RESTART_BUTTON = { x: GAME_WIDTH / 2 - 90, y: 160, width: 180, height: 40 };
+const MUTE_BUTTON = { x: GAME_WIDTH - 34, y: 8, width: 26, height: 22 };
 
 export const STATE = { TITLE: 'TITLE', PLAYING: 'PLAYING', WIN: 'WIN', GAMEOVER: 'GAMEOVER' };
 
@@ -31,6 +33,7 @@ export class Game {
     this.camera = new Camera();
     this.projectiles = [];
     this.state = STATE.PLAYING;
+    Music.start(); // no-op if already playing -- safe to call on every (re)start
   }
 
   backToTitle() {
@@ -42,6 +45,10 @@ export class Game {
   }
 
   handleClick(mx, my) {
+    if (insideRect(mx, my, MUTE_BUTTON)) {
+      Music.toggleMute();
+      return;
+    }
     if (this.state === STATE.TITLE && titleScreen.isInsideButton(mx, my)) {
       this.startGame();
       return;
@@ -108,8 +115,14 @@ export class Game {
       player.vy = 0;
     }
 
-    if (overlaps(playerBox, level.goal)) this.state = STATE.WIN;
-    if (player.dead) this.state = STATE.GAMEOVER;
+    if (overlaps(playerBox, level.goal) && this.state !== STATE.WIN) {
+      this.state = STATE.WIN;
+      Music.playVictoryJingle();
+    }
+    if (player.dead && this.state !== STATE.GAMEOVER) {
+      this.state = STATE.GAMEOVER;
+      Music.playGameOverJingle();
+    }
 
     this.camera.follow(player.x);
   }
@@ -120,6 +133,7 @@ export class Game {
 
     if (this.state === STATE.TITLE) {
       titleScreen.render(ctx, nowMs);
+      drawMuteButton(ctx, Music.muted);
       return;
     }
 
@@ -135,7 +149,25 @@ export class Game {
 
     if (this.state === STATE.WIN) renderEndScreen(ctx, 'DEMO COMPLETE!', '#2a9d3f');
     if (this.state === STATE.GAMEOVER) renderEndScreen(ctx, 'GAME OVER', '#e63946');
+
+    drawMuteButton(ctx, Music.muted); // always last so it stays on top of end-screen overlays
   }
+}
+
+function drawMuteButton(ctx, muted) {
+  const b = MUTE_BUTTON;
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fillRect(b.x, b.y, b.width, b.height);
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(b.x, b.y, b.width, b.height);
+  ctx.fillStyle = '#fff';
+  ctx.font = "12px 'Press Start 2P', monospace";
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(muted ? 'X' : '\u266A', b.x + b.width / 2, b.y + b.height / 2 + 1);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
 }
 
 function insideRect(mx, my, r) {

@@ -17,6 +17,11 @@ Cordova/Capacitor later for an actual app store build).
 - Enemies: frogs that hop between lily pads and shoot their tongue as a
   ranged attack. Stomp them from above (Mario-style) OR snipe them with a
   propeller shot to neutralize.
+- Original chiptune soundtrack, synthesized live in the browser via the Web
+  Audio API (no audio files -- same "everything's procedurally generated"
+  philosophy as the pixel art). Driving minor-key arpeggio backbone (a nod
+  to Knight Rider's synth ostinato) under a catchy 8-bit lead hook, plus
+  victory/game-over jingles. Press M or tap the on-screen note-icon button to mute.
 - Simple platforming physics (gravity, ground/platform collision)
 
 ## Run it
@@ -33,24 +38,26 @@ index.html          entry point / canvas host
 css/style.css        page chrome styling
 js/                   all game code (ES modules)
   constants.js        tunable game constants
-  input.js             keyboard state tracker
-  assets.js            image loading + chroma-key transparency helper
-  player.js             duck-scooter player entity
-  projectile.js         propeller shot entity
-  enemy.js              frog enemy entity
-  level.js               level data + platform/collision layout
-  camera.js              side-scrolling camera
-  titleScreen.js         title screen state + START button
-  game.js                 main game state machine + loop
-  main.js                 bootstrap
-assets/images/        generated pixel-art sprites & backgrounds
+  input.js             keyboard state tracker (+ virtual input for touch)
+  touchControls.js      on-screen touch buttons (phones/tablets)
+  music.js               Web Audio synth engine + step sequencer
+  musicData.js            song data (notes/patterns) the engine plays
+  player.js                duck-scooter player entity
+  projectile.js             propeller shot entity
+  enemy.js                   frog enemy entity
+  level.js                    level data + platform/collision layout
+  camera.js                    side-scrolling camera
+  titleScreen.js                 title screen state + START button
+  game.js                         main game state machine + loop
+  main.js                          bootstrap
+assets/icons/         generated PWA app icons
 ```
 
 ## Roadmap (not in current demo scope)
 
 - Power-ups (speed boost, shield/star invincibility)
 - More levels / world map
-- Sound effects & music
+- Sound effects (jump/hit/pickup blips) to go with the new music
 - Score / lives / HUD polish
 - Real native APK/.exe build (Capacitor/Electron) -- needs Node.js + Android
   SDK/Java toolchain, not installed in this project's dev environment yet
