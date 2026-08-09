@@ -17,6 +17,9 @@ import { Music } from './music.js';
 const RESTART_BUTTON = { x: GAME_WIDTH / 2 - 90, y: 160, width: 180, height: 40 };
 const MUTE_BUTTON = { x: GAME_WIDTH - 34, y: 8, width: 26, height: 22 };
 const LEVEL_INTRO_MS = 1600; // "LEVEL n" card shown before play begins
+// Longer than the intro so the clear fanfare gets to finish before the next
+// level's track kicks in -- cutting your own victory music off feels cheap.
+const LEVEL_CLEAR_MS = 3200;
 
 export const STATE = {
   TITLE: 'TITLE',
@@ -37,6 +40,7 @@ export class Game {
     this.projectiles = [];
     this.levelIndex = 0;
     this.introUntil = 0;
+    this.wasOnCart = false; // edge-detects landing on a cart, for its creak
   }
 
   startGame() {
@@ -56,6 +60,8 @@ export class Game {
     this.projectiles = [];
     this.introUntil = performance.now() + LEVEL_INTRO_MS;
     this.state = STATE.INTRO;
+    Music.setLevel(index);       // each level gets its own track
+    Music.restoreMusicLevel();   // undo any ducking from the clear fanfare
   }
 
   advanceLevel() {
@@ -114,16 +120,30 @@ export class Game {
     // position -- otherwise a rising cart clips straight through him.
     for (const cart of level.carts) cart.update(dtMs);
 
+    const wasGrounded = player.grounded;
+    const heartsBefore = player.hearts;
+
     player.update(dtMs, level.solids, nowMs);
+
+    // Left the ground under his own power (not knocked back) -- that's a jump.
+    if (wasGrounded && !player.grounded && player.vy < 0) Music.play('jump');
 
     // Carry the player if they're standing on a cart. Must run AFTER the
     // player's own collision pass, since that's what records what they're
     // standing on -- otherwise the cart slides out from under them.
     for (const cart of level.carts) cart.carry(player);
 
+    // Landing on a cart gets its own creak, so riding one is audible.
+    const onCart = player.groundSolid && player.groundSolid.isCart;
+    if (onCart && !this.wasOnCart) Music.play('cart');
+    this.wasOnCart = onCart;
+
     if (Input.shoot()) {
       const shot = player.tryShoot(nowMs);
-      if (shot) this.projectiles.push(shot);
+      if (shot) {
+        this.projectiles.push(shot);
+        Music.play('shoot');
+      }
     }
 
     for (const shot of this.projectiles) shot.update(dtMs);
@@ -140,6 +160,8 @@ export class Game {
         if (isStomp) {
           frog.stomp();
           player.stompBounce();
+          Music.play('stomp');
+          Music.play('frog');
         } else {
           player.takeDamage(nowMs, frog.x);
         }
@@ -150,11 +172,21 @@ export class Game {
         player.takeDamage(nowMs, frog.x);
       }
 
+      // Announce a tongue lash the frame it starts, so the hazard is audible
+      // before it connects rather than only when it hurts you.
+      if (frog.state === 'tongue' && !frog.tongueAnnounced) {
+        frog.tongueAnnounced = true;
+        Music.play('tongue');
+      } else if (frog.state !== 'tongue') {
+        frog.tongueAnnounced = false;
+      }
+
       if (frogBox) {
         for (const shot of this.projectiles) {
           if (!shot.dead && overlaps(shot.getHitbox(), frogBox)) {
             frog.killByProjectile();
             shot.dead = true;
+            Music.play('frog');
           }
         }
       }
@@ -173,6 +205,8 @@ export class Game {
         if (isStomp) {
           goose.stomp();
           player.stompBounce();
+          Music.play('stomp');
+          Music.play('goose');
         } else {
           player.takeDamage(nowMs, goose.x);
         }
@@ -182,6 +216,7 @@ export class Game {
         if (!shot.dead && overlaps(shot.getHitbox(), gooseBox)) {
           goose.killByProjectile();
           shot.dead = true;
+          Music.play('goose');
         }
       }
     }
@@ -189,6 +224,7 @@ export class Game {
 
     // Fell in a pond -- ouch, respawn at the last checkpoint reached.
     if (player.y > GAME_HEIGHT + 60) {
+      Music.play('splash');
       const checkpointX = [...level.checkpoints].reverse().find((cx) => cx <= player.x) ?? level.checkpoints[0];
       player.takeDamage(nowMs, player.x);
       player.x = checkpointX;
@@ -197,20 +233,25 @@ export class Game {
       player.vy = 0;
     }
 
+    // Any heart lost that wasn't already covered by a splash gets the hurt
+    // sting -- checked once here rather than at every damage site.
+    if (player.hearts < heartsBefore) Music.play('hurt');
+
     if (overlaps(playerBox, level.goal)) {
       const isFinalLevel = this.levelIndex >= LEVEL_COUNT - 1;
       if (isFinalLevel) {
         this.state = STATE.WIN;
-        Music.stop(); // main theme cuts out -- only the win jingle should play
+        Music.stop(); // main theme cuts out -- only the fanfare should play
         Music.playVictoryJingle();
       } else {
         this.state = STATE.LEVEL_CLEAR;
-        this.introUntil = nowMs + LEVEL_INTRO_MS;
+        this.introUntil = nowMs + LEVEL_CLEAR_MS;
+        Music.playLevelClearFanfare(); // clearing a level is an achievement too
       }
     }
     if (player.dead && this.state !== STATE.GAMEOVER) {
       this.state = STATE.GAMEOVER;
-      Music.stop(); // main theme cuts out -- only the game-over jingle should play
+      Music.stop(); // main theme cuts out -- only the fanfare should play
       Music.playGameOverJingle();
     }
 

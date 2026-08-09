@@ -1,66 +1,141 @@
-// Composition data for the Duck Scooter Dash theme. Kept separate from the
-// synth engine (music.js) so "what the song IS" and "how notes get played"
-// don't tangle -- change the tune here without touching audio-engine code.
+// Composition data for Duck Scooter Dash. Kept separate from the synth
+// engine (music.js) so "what the song IS" and "how notes get played" don't
+// tangle -- retune a track here without touching audio-engine code.
 //
-// Vibe brief (v5, total rewrite): "hacker techno" -- Mr. Robot / Matrix
-// terminal energy, not "80s getaway driver" energy. Everything before this
-// was some flavor of driving/upbeat arpeggio, which kept missing the mark.
-// This version is deliberately COLD and SPARSE instead: a slow hypnotic
-// bass pulse that dips into a dissonant minor-second neighbor tone (proper
-// "something's not right" tension, not a pleasant triad), irregular
-// glitchy "data blip" hits instead of a beat you'd nod along to, and a deep
-// sub-bass drone underneath. Nothing here should read as an upbeat tune.
+// There is one TRACK per level, each matched to that level's theme. The
+// engine reads whichever track is selected; adding a fourth level means
+// adding a fourth track object here, nothing more.
 
-export const BPM = 96;
-
-// One "step" = one 16th note. Everything below is indexed in 16th steps.
-export const STEP_SECONDS = 60 / BPM / 4;
-
-export const LOOP_STEPS = 16; // 1 bar -- short, repetitive, hypnotic on purpose
-
-// Equal-tempered note frequencies (A4 = 440Hz). Low register (2s/3s) for the
-// cold bass/drone, high register (5s/6) for the sparse digital "blips".
+// Equal-tempered note frequencies (A4 = 440Hz).
 const NOTE_FREQ = {
-  A2: 110.00, D3: 146.83,
-  A3: 220.00, Bb3: 233.08, C4: 261.63,
-  D4: 293.66, E4: 329.63, G4: 392.00, A4: 440.00,
-  C5: 523.25, E5: 659.25, G5: 783.99, C6: 1046.50,
+  A1: 55.00, C2: 65.41, D2: 73.42, E2: 82.41, F2: 87.31, G2: 98.00,
+  A2: 110.00, Bb2: 116.54, C3: 130.81, D3: 146.83, Eb3: 155.56, E3: 164.81,
+  F3: 174.61, G3: 196.00, A3: 220.00, Bb3: 233.08, B3: 246.94,
+  C4: 261.63, Eb4: 311.13, D4: 293.66,
+  E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, Bb4: 466.16, B4: 493.88,
+  C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00,
+  C6: 1046.50, E6: 1318.51, G6: 1567.98,
 };
 
-/** Looks up a note name's frequency, or returns null for a rest (null/undefined entry). */
+/** Frequency for a note name, or null for a rest. */
 export function noteFreq(name) {
   return name ? NOTE_FREQ[name] ?? null : null;
 }
 
-// --- Bass pulse: slow 8th-note hypnotic throb, mostly sitting on the root
-// but dipping into a dissonant minor-second neighbor (A3 -> Bb3) for tension
-// instead of a "nice"-sounding triad move. This is deliberately repetitive
-// and a little uneasy, not catchy.
-export const BASS_PATTERN = [
-  'A3', null, 'A3', null, 'A3', null, 'Bb3', null,
-  'A3', null, 'A3', null, 'A3', null, 'Bb3', null,
+function stepSeconds(bpm) {
+  return 60 / bpm / 4; // one step = one 16th note
+}
+
+// --- Track 1: Farmyard Frolic (day) -------------------------------------
+// The established "hacker techno" identity, kept intact: cold square bass
+// dipping to a dissonant minor second, sparse data blips, sub drone.
+const FARMYARD = {
+  name: 'Farmyard Frolic',
+  bpm: 96,
+  loopSteps: 16,
+  bass: {
+    type: 'square', gain: 0.09, length: 1.6,
+    pattern: ['A3', null, 'A3', null, 'A3', null, 'Bb3', null,
+              'A3', null, 'A3', null, 'A3', null, 'Bb3', null],
+  },
+  lead: {
+    type: 'square', gain: 0.06, length: 0.7,
+    pattern: [null, null, null, 'G5', null, null, null, null,
+              null, 'C6', null, null, null, 'E5', null, null],
+  },
+  drone: { note: 'A2', type: 'sine', gain: 0.10 },
+  clicks: [0, 6, 10, 13],
+};
+
+// --- Track 2: Orchard Sunset ---------------------------------------------
+// Warmer and faster -- a rolling triangle-wave bassline that actually walks
+// somewhere, with a wistful sawtooth motif over it. Still not "cheerful",
+// but it moves like a chase where the day is running out.
+const ORCHARD = {
+  name: 'Orchard Sunset',
+  bpm: 112,
+  loopSteps: 16,
+  bass: {
+    type: 'triangle', gain: 0.11, length: 1.1,
+    pattern: ['D3', null, 'A3', null, 'F3', null, 'A3', null,
+              'C3', null, 'G3', null, 'E3', null, 'G3', null],
+  },
+  lead: {
+    type: 'sawtooth', gain: 0.05, length: 1.4,
+    pattern: [null, null, 'D5', null, null, 'F5', null, null,
+              'E5', null, null, null, 'D5', null, 'C5', null],
+  },
+  drone: { note: 'D2', type: 'triangle', gain: 0.08 },
+  clicks: [0, 4, 8, 12], // steadier pulse than level 1 -- more urgency
+};
+
+// --- Track 3: Midnight Pond ----------------------------------------------
+// Slow, deep and dread-laden. Long sine sub, a sparse minor motif drifting
+// on top, and irregular clicks so it never settles into a groove.
+const MIDNIGHT = {
+  name: 'Midnight Pond',
+  bpm: 76,
+  loopSteps: 16,
+  bass: {
+    type: 'sine', gain: 0.13, length: 2.4,
+    pattern: ['C3', null, null, null, 'C3', null, null, null,
+              'Bb2', null, null, null, 'G2', null, null, null],
+  },
+  lead: {
+    type: 'triangle', gain: 0.055, length: 2.2,
+    // Eb gives the minor colour that makes this read as dread rather than calm.
+    pattern: [null, null, null, null, 'G4', null, null, null,
+              null, null, 'Eb4', null, null, null, 'D4', null],
+  },
+  drone: { note: 'C2', type: 'sine', gain: 0.12 },
+  clicks: [0, 7, 11],
+};
+
+export const TRACKS = [FARMYARD, ORCHARD, MIDNIGHT];
+
+/** Track for a level index, clamped so extra levels reuse the last one. */
+export function trackFor(levelIndex) {
+  return TRACKS[Math.max(0, Math.min(levelIndex, TRACKS.length - 1))];
+}
+
+export function trackStepSeconds(track) {
+  return stepSeconds(track.bpm);
+}
+
+// --- One-shot stingers ---------------------------------------------------
+// Deliberately BIG. These mark real accomplishment, so they're written as
+// layered events (chords + octave doubling + a rising run) rather than the
+// thin single-voice arpeggio the first version used.
+//
+// Each event: { notes: [...] played together, steps, type, gain, detune }
+
+// Level clear: a triumphant rising fanfare in C major, four chord stabs
+// climbing to a held octave-doubled tonic.
+export const LEVEL_CLEAR_FANFARE = [
+  { notes: ['C4', 'E4', 'G4'], steps: 1.5, gain: 0.20 },
+  { notes: ['E4', 'G4', 'C5'], steps: 1.5, gain: 0.21 },
+  { notes: ['G4', 'C5', 'E5'], steps: 1.5, gain: 0.22 },
+  { notes: ['C5', 'E5', 'G5'], steps: 2.5, gain: 0.24 },
+  { notes: ['G4', 'C5', 'E5', 'G5', 'C6'], steps: 7, gain: 0.26, type: 'triangle' },
 ];
 
-// --- Data blips: sparse, irregular high hits -- a "terminal processing"
-// texture, not a melody. Deliberately off-grid/asymmetric placement.
-export const BLIP_PATTERN = [
-  null, null, null, 'G5', null, null, null, null,
-  null, 'C6', null, null, null, 'E5', null, null,
+// Final victory: everything the level-clear does, then a held six-note
+// major stack with an octave above it. This should feel like a big deal.
+export const VICTORY_FANFARE = [
+  { notes: ['C4', 'E4', 'G4'], steps: 1, gain: 0.20 },
+  { notes: ['E4', 'G4', 'C5'], steps: 1, gain: 0.21 },
+  { notes: ['G4', 'C5', 'E5'], steps: 1, gain: 0.22 },
+  { notes: ['C5', 'E5', 'G5'], steps: 1, gain: 0.23 },
+  { notes: ['E5', 'G5', 'C6'], steps: 1, gain: 0.24 },
+  { notes: ['G5', 'C6', 'E6'], steps: 2, gain: 0.25 },
+  { notes: ['C4', 'G4', 'C5', 'E5', 'G5', 'C6', 'E6', 'G6'], steps: 12, gain: 0.30, type: 'triangle' },
 ];
 
-// --- Sub-bass drone: one long low note held almost the whole bar, very
-// quiet -- cold atmosphere, not a melodic pad.
-export const DRONE_NOTE = 'A2';
-
-// --- Glitch clicks: sparse, irregular percussive ticks -- texture, not a
-// beat you'd nod along to. No steady four-on-the-floor anything.
-export const CLICK_STEPS = [0, 6, 10, 13];
-
-// --- One-shot stingers (state-transition jingles, not looped) ------------
-export const VICTORY_JINGLE = [
-  ['C5', 2], ['E5', 2], ['G5', 2], ['C5', 1], ['G5', 1], ['C5', 4],
-];
-
-export const GAMEOVER_JINGLE = [
-  ['A4', 3], ['G4', 3], ['E4', 3], ['A3', 6],
+// Death: a heavy descending minor collapse ending on a low held root.
+export const GAMEOVER_FANFARE = [
+  { notes: ['A4', 'C5', 'E5'], steps: 2, gain: 0.20 },
+  { notes: ['G4', 'Bb4', 'D5'], steps: 2, gain: 0.19 },
+  { notes: ['F4', 'A4', 'C5'], steps: 2, gain: 0.18 },
+  { notes: ['E4', 'G4', 'B4'], steps: 3, gain: 0.17 },
+  { notes: ['A2', 'A3', 'C4'], steps: 10, gain: 0.24, type: 'sawtooth' },
 ];

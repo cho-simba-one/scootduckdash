@@ -61,11 +61,11 @@ assets/icons/         generated PWA app icons
 
 Three levels, each with its own theme, width and hazards:
 
-| # | Name | Theme | New hazard |
-|---|------|-------|------------|
-| 1 | Farmyard Frolic | Day | Frogs (tongue attack) |
-| 2 | Orchard Sunset | Sunset | Patrolling geese |
-| 3 | Midnight Pond | Night | Moving hay carts |
+| # | Name | Theme | New hazard | Music |
+|---|------|-------|------------|-------|
+| 1 | Farmyard Frolic | Day | Frogs (tongue attack) | 96bpm cold square-wave techno |
+| 2 | Orchard Sunset | Sunset | Patrolling geese | 112bpm walking triangle bass |
+| 3 | Midnight Pond | Night | Moving hay carts | 76bpm slow sine dread |
 
 Levels are **pure data** in `js/levels.js`; `js/level.js` builds them. Adding a
 fourth level is a data edit, never a code edit. Hearts carry between levels and
@@ -78,6 +78,28 @@ unbeatable. `js/constants.js` fixes the physics; the derived maximum is
 gravity-then-position order `player.js` integrates -- the closed-form answer is
 ~3px optimistic because airtime quantises to whole frames). Level data should
 keep every edge-to-edge gap under ~92px to leave a real margin.
+
+## Audio
+
+Everything is synthesized live in the browser -- no audio files, same
+"everything is code" rule the pixel art follows.
+
+- `js/musicData.js` -- one TRACK per level (tempo, waveforms, patterns) plus
+  the one-shot fanfares. Adding a level means adding a track object here.
+- `js/sfx.js` -- nine gameplay sounds. Each creature gets its own timbre AND
+  register so you can tell what happened without looking: frogs croak low and
+  wet, geese honk nasal and harsh, carts creak like wood.
+- `js/music.js` -- the engine (lookahead sequencer + node graph). It knows how
+  to play things, never what is being played.
+
+Music runs through a `musicGain` sub-mix while SFX go straight to `master`, so
+a fanfare can duck the backing track without also ducking the sound effects.
+Chord gains are divided by `sqrt(voiceCount)` so the eight-voice victory stack
+doesn't clip.
+
+Browsers block audio until a real user gesture, so the soundtrack starts on the
+START click, not before. `Music.play()` no-ops safely if it's called before the
+AudioContext exists -- gameplay must never depend on audio being available.
 
 ## Roadmap (not in current demo scope)
 
