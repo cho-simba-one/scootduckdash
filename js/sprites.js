@@ -120,6 +120,18 @@ export const LILYPAD = [
   '...GGGGGGGG...',
 ];
 
+// ---- Collectables ------------------------------------------------------
+// Reward for riding a vertical cart up to the high route. Drawn with the
+// existing red/white palette keys so it reads as a classic pickup heart.
+export const HEART_PICKUP = [
+  '.rr.rr.',
+  'rwrrrrr',
+  'rrrrrrr',
+  '.rrrrr.',
+  '..rrr..',
+  '...r...',
+];
+
 // ---- Background / scenery decor --------------------------------------
 export const CLOUD = [
   '...wwww..wwww...',

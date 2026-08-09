@@ -6,6 +6,7 @@ import { GAME_HEIGHT, GROUND_Y } from './constants.js';
 import { LEVELS, LEVEL_COUNT } from './levels.js';
 import { Frog } from './enemy.js';
 import { Goose, Cart } from './hazards.js';
+import { Pickup } from './pickups.js';
 import { spriteSize } from './pixelArt.js';
 import { HAY_BALE, LILYPAD } from './sprites.js';
 
@@ -48,6 +49,9 @@ export function createLevel(index = 0) {
   const frogs = [];
   const geese = [];
   const carts = [];
+  // Optional in the data: levels without bonuses simply omit the key rather
+  // than carrying an empty array around.
+  const pickups = (data.pickups ?? []).map(([x, y, kind]) => new Pickup(x, y, kind));
 
   for (const [x, width] of data.ground) solids.push(groundStrip(x, width));
   for (const [x, y] of data.hay) solids.push(hayPlatform(x, y));
@@ -94,7 +98,7 @@ export function createLevel(index = 0) {
     subtitle: data.subtitle,
     theme: data.theme,
     width: data.width,
-    solids, lilyPads, frogs, geese, carts, ponds, checkpoints,
+    solids, lilyPads, frogs, geese, carts, pickups, ponds, checkpoints,
     buildings, animals, goal,
     clouds: scatterClouds(data.width),
   };

@@ -82,7 +82,11 @@ export const LEVELS = [
     width: 4800,
     theme: THEMES.night,
     ground: [[0, 480], [1080, 400], [2100, 380], [3100, 360], [4080, 720]],
-    hay: [[200, 160], [340, 125], [1150, 155], [1320, 120], [2200, 150], [3200, 145], [4200, 150]],
+    // The blocks flanking each lift cart (x=1250, x=3250) are kept a full
+    // jump-length clear of the bonus hearts. Sitting any closer let players
+    // hop straight up to the reward and skip the lift entirely, which made
+    // the vertical carts pointless -- the exact thing they exist to fix.
+    hay: [[200, 160], [340, 125], [1100, 155], [1440, 120], [2200, 150], [3110, 145], [4200, 150]],
     ponds: [[480, 1080], [1480, 2100], [2480, 3100], [3460, 4080]],
     // Pads sit close enough that every hop clears the safe-jump budget --
     // the challenge here is the carts and geese, not inhuman leaps.
@@ -95,10 +99,14 @@ export const LEVELS = [
     frogs: [[660, 190], [980, 195], [1660, 195], [2000, 190],
             [2660, 190], [3000, 195], [3640, 195], [3980, 190]],
     geese: [[800, 105, 300], [1900, 95, 340], [2900, 110, 320], [3900, 100, 300]],
-    // Carts bridge the one deliberately-wide stretch in each pond, and the
-    // vertical pair act as lifts up to the hay route.
+    // Carts bridge the one deliberately-wide stretch in each pond. The
+    // vertical pair are LIFTS: they exist to carry you up to a bonus heart
+    // that nothing else can reach, which is the only reason to ride one.
     carts: [[820, 195, 130, 'h'], [1820, 190, 150, 'h'], [2820, 195, 150, 'h'],
             [3800, 190, 150, 'h'], [1250, 150, 70, 'v'], [3250, 150, 70, 'v']],
+    // Positioned at each vertical cart's apex -- see level.js for the check
+    // that keeps them out of jump range from anywhere else.
+    pickups: [[1270, 36, 'heart'], [3270, 36, 'heart']],
     buildings: [['farmhouse', 300], ['barn', 2150], ['farmhouse', 4150]],
     animals: [['dog', 250], ['goose', 2200], ['dog', 4250]],
   },

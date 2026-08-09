@@ -123,20 +123,39 @@ export class Game {
     const wasGrounded = player.grounded;
     const heartsBefore = player.hearts;
 
+    // Carry riders BEFORE the player's own physics, so the deck and its
+    // passenger move as one body and collision then resolves exactly once.
+    // Doing it afterwards double-applies the motion: resolveAxis has already
+    // snapped the rider onto the moved deck, so adding dy again produced a
+    // ~1.75px vertical jitter that reversed at each end of a cart's stroke.
+    for (const cart of level.carts) cart.carry(player);
+
     player.update(dtMs, level.solids, nowMs);
 
     // Left the ground under his own power (not knocked back) -- that's a jump.
     if (wasGrounded && !player.grounded && player.vy < 0) Music.play('jump');
 
-    // Carry the player if they're standing on a cart. Must run AFTER the
-    // player's own collision pass, since that's what records what they're
-    // standing on -- otherwise the cart slides out from under them.
-    for (const cart of level.carts) cart.carry(player);
-
     // Landing on a cart gets its own creak, so riding one is audible.
     const onCart = player.groundSolid && player.groundSolid.isCart;
     if (onCart && !this.wasOnCart) Music.play('cart');
     this.wasOnCart = onCart;
+
+    // Bonus pickups -- the payoff for riding a lift cart up to the high route.
+    for (const pickup of level.pickups) {
+      pickup.update(dtMs, nowMs);
+      const box = pickup.getHitbox();
+      if (!box || !overlaps(player.getHitbox(), box)) continue;
+
+      // Don't consume a heart the player can't benefit from -- leave it
+      // floating so it's still there after they take a hit.
+      if (pickup.kind === 'heart' && player.hearts >= PLAYER_MAX_HEARTS) continue;
+
+      if (pickup.collect()) {
+        if (pickup.kind === 'heart') player.hearts += 1;
+        Music.play('pickup');
+      }
+    }
+    level.pickups = level.pickups.filter((p) => !p.dead);
 
     if (Input.shoot()) {
       const shot = player.tryShoot(nowMs);
@@ -273,6 +292,7 @@ export class Game {
     renderBackground(ctx, this.camera, level, nowMs);
     renderTerrain(ctx, this.camera, level);
     for (const cart of level.carts) cart.render(ctx, this.camera);
+    for (const pickup of level.pickups) pickup.render(ctx, this.camera);
     for (const frog of level.frogs) frog.render(ctx, this.camera);
     for (const goose of level.geese) goose.render(ctx, this.camera);
     renderGoal(ctx, this.camera, level);
@@ -340,10 +360,13 @@ function renderHud(ctx, player, level) {
     drawHeart(ctx, 16 + i * 26, 16, i < player.hearts);
   }
 
-  // Level counter, tucked under the hearts so it never fights the mute button.
+  // Level counter, below the high route. A bonus heart bobs through
+  // y=33..57 (baseY 36, +/-3 bob, and the sprite is 6 rows at scale 3 = 18px
+  // tall -- it's the sprite HEIGHT that makes the band, and undercounting it
+  // is how two earlier attempts at this landed inside the heart).
   ctx.font = "8px 'Press Start 2P', monospace";
   ctx.fillStyle = 'rgba(0,0,0,0.65)';
-  ctx.fillText(`LEVEL ${level.index + 1}/${LEVEL_COUNT}  ${level.name}`, 16, 48);
+  ctx.fillText(`LEVEL ${level.index + 1}/${LEVEL_COUNT}  ${level.name}`, 16, 66);
 }
 
 function drawHeart(ctx, x, y, filled) {

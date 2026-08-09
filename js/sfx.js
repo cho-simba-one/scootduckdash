@@ -113,4 +113,16 @@ export const SFX = {
   stomp(ctx, dest) {
     tone(ctx, dest, { from: 220, to: 80, dur: 0.12, type: 'triangle', gain: 0.11 });
   },
+
+  /** Collected a bonus -- bright ascending arpeggio. Deliberately the only
+   * RISING major figure in the whole set, so a reward can never be mistaken
+   * for one of the hazards. */
+  pickup(ctx, dest) {
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5 E5 G5 C6
+    notes.forEach((freq, i) => {
+      tone(ctx, dest, {
+        from: freq, dur: 0.16, type: 'triangle', gain: 0.13, delay: i * 0.055,
+      });
+    });
+  },
 };
