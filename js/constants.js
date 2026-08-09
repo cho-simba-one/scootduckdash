@@ -33,8 +33,12 @@ export const FROG_TONGUE_RANGE = 70;
 export const FROG_TONGUE_DURATION_MS = 500;
 export const FROG_TONGUE_COOLDOWN_MS = [2200, 4000];
 
-export const LEVEL_WIDTH = 3600; // total scrollable width of the demo level
+// Level widths now live per-level in levels.js -- they differ, and a shared
+// constant would scroll past the end of short levels and stop short on long ones.
 export const GROUND_Y = GAME_HEIGHT - 40;
+
+export const GOOSE_PATROL_SPEED = 1.15;
+export const CART_SPEED = 1.5; // radians/sec through the eased travel cycle
 
 export const KEY_LEFT = ['ArrowLeft'];
 export const KEY_RIGHT = ['ArrowRight'];

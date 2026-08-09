@@ -7,15 +7,25 @@ import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, PLAYER_HEIGHT, PLAYER_MAX_HEARTS } f
 import { Input } from './input.js';
 import { Player, overlaps } from './player.js';
 import { Camera } from './camera.js';
-import { createLevel } from './level.js';
-import { renderSky, renderBackground, renderTerrain, renderGoal } from './background.js';
+import { createLevel, LEVEL_COUNT } from './level.js';
+import {
+  renderSky, renderBackground, renderTerrain, renderGoal, renderThemeOverlay,
+} from './background.js';
 import * as titleScreen from './titleScreen.js';
 import { Music } from './music.js';
 
 const RESTART_BUTTON = { x: GAME_WIDTH / 2 - 90, y: 160, width: 180, height: 40 };
 const MUTE_BUTTON = { x: GAME_WIDTH - 34, y: 8, width: 26, height: 22 };
+const LEVEL_INTRO_MS = 1600; // "LEVEL n" card shown before play begins
 
-export const STATE = { TITLE: 'TITLE', PLAYING: 'PLAYING', WIN: 'WIN', GAMEOVER: 'GAMEOVER' };
+export const STATE = {
+  TITLE: 'TITLE',
+  INTRO: 'INTRO',
+  PLAYING: 'PLAYING',
+  LEVEL_CLEAR: 'LEVEL_CLEAR',
+  WIN: 'WIN',
+  GAMEOVER: 'GAMEOVER',
+};
 
 export class Game {
   constructor(ctx) {
@@ -23,17 +33,44 @@ export class Game {
     this.state = STATE.TITLE;
     this.level = null;
     this.player = null;
-    this.camera = new Camera();
+    this.camera = null;
     this.projectiles = [];
+    this.levelIndex = 0;
+    this.introUntil = 0;
   }
 
   startGame() {
-    this.level = createLevel();
-    this.player = new Player(40, GROUND_Y - PLAYER_HEIGHT);
-    this.camera = new Camera();
-    this.projectiles = [];
-    this.state = STATE.PLAYING;
+    this.levelIndex = 0;
+    this.loadLevel(0, PLAYER_MAX_HEARTS);
     Music.start(); // no-op if already playing -- safe to call on every (re)start
+  }
+
+  /** Build a level and show its intro card. Hearts carry across levels. */
+  loadLevel(index, hearts) {
+    this.levelIndex = index;
+    this.level = createLevel(index);
+    this.player = new Player(40, GROUND_Y - PLAYER_HEIGHT);
+    this.player.hearts = hearts;
+    this.camera = new Camera(this.level.width);
+    this.camera.follow(this.player.x);
+    this.projectiles = [];
+    this.introUntil = performance.now() + LEVEL_INTRO_MS;
+    this.state = STATE.INTRO;
+  }
+
+  advanceLevel() {
+    const next = this.levelIndex + 1;
+    if (next >= LEVEL_COUNT) {
+      this.state = STATE.WIN;
+      Music.stop();
+      Music.playVictoryJingle();
+      return;
+    }
+    // Reward clearing a level with a heart back (capped) so a rough level
+    // doesn't doom the whole run.
+    const hearts = Math.min(PLAYER_MAX_HEARTS, this.player.hearts + 1);
+    this.loadLevel(next, hearts);
+    Music.start();
   }
 
   backToTitle() {
@@ -59,12 +96,31 @@ export class Game {
   }
 
   update(dtMs, nowMs) {
+    // Intro and level-clear cards are timed pauses -- the world holds still.
+    if (this.state === STATE.INTRO) {
+      if (nowMs >= this.introUntil) this.state = STATE.PLAYING;
+      return;
+    }
+    if (this.state === STATE.LEVEL_CLEAR) {
+      if (nowMs >= this.introUntil) this.advanceLevel();
+      return;
+    }
     if (this.state !== STATE.PLAYING) return;
 
     const player = this.player;
     const level = this.level;
 
+    // Carts move BEFORE the player so he collides against this frame's
+    // position -- otherwise a rising cart clips straight through him.
+    for (const cart of level.carts) cart.update(dtMs);
+
     player.update(dtMs, level.solids, nowMs);
+
+    // Carry the player if they're standing on a cart. Must run AFTER the
+    // player's own collision pass, since that's what records what they're
+    // standing on -- otherwise the cart slides out from under them.
+    for (const cart of level.carts) cart.carry(player);
+
     if (Input.shoot()) {
       const shot = player.tryShoot(nowMs);
       if (shot) this.projectiles.push(shot);
@@ -105,6 +161,32 @@ export class Game {
     }
     level.frogs = level.frogs.filter((f) => !f.dead);
 
+    // Geese share the frog's stomp/shoot contract, so the same rules apply.
+    for (const goose of level.geese) {
+      goose.update(dtMs, nowMs);
+      const gooseBox = goose.getHitbox();
+      if (!gooseBox) continue;
+
+      if (overlaps(playerBox, gooseBox)) {
+        const stompDepth = playerBox.y + playerBox.height - gooseBox.y;
+        const isStomp = player.vy > 0 && stompDepth < gooseBox.height * 0.7;
+        if (isStomp) {
+          goose.stomp();
+          player.stompBounce();
+        } else {
+          player.takeDamage(nowMs, goose.x);
+        }
+      }
+
+      for (const shot of this.projectiles) {
+        if (!shot.dead && overlaps(shot.getHitbox(), gooseBox)) {
+          goose.killByProjectile();
+          shot.dead = true;
+        }
+      }
+    }
+    level.geese = level.geese.filter((g) => !g.dead);
+
     // Fell in a pond -- ouch, respawn at the last checkpoint reached.
     if (player.y > GAME_HEIGHT + 60) {
       const checkpointX = [...level.checkpoints].reverse().find((cx) => cx <= player.x) ?? level.checkpoints[0];
@@ -115,10 +197,16 @@ export class Game {
       player.vy = 0;
     }
 
-    if (overlaps(playerBox, level.goal) && this.state !== STATE.WIN) {
-      this.state = STATE.WIN;
-      Music.stop(); // main theme cuts out -- only the win jingle should play
-      Music.playVictoryJingle();
+    if (overlaps(playerBox, level.goal)) {
+      const isFinalLevel = this.levelIndex >= LEVEL_COUNT - 1;
+      if (isFinalLevel) {
+        this.state = STATE.WIN;
+        Music.stop(); // main theme cuts out -- only the win jingle should play
+        Music.playVictoryJingle();
+      } else {
+        this.state = STATE.LEVEL_CLEAR;
+        this.introUntil = nowMs + LEVEL_INTRO_MS;
+      }
     }
     if (player.dead && this.state !== STATE.GAMEOVER) {
       this.state = STATE.GAMEOVER;
@@ -139,21 +227,51 @@ export class Game {
       return;
     }
 
-    renderSky(ctx);
-    renderBackground(ctx, this.camera, this.level, nowMs);
-    renderTerrain(ctx, this.camera, this.level);
-    for (const frog of this.level.frogs) frog.render(ctx, this.camera);
-    renderGoal(ctx, this.camera, this.level);
+    const level = this.level;
+    renderSky(ctx, level.theme);
+    renderBackground(ctx, this.camera, level, nowMs);
+    renderTerrain(ctx, this.camera, level);
+    for (const cart of level.carts) cart.render(ctx, this.camera);
+    for (const frog of level.frogs) frog.render(ctx, this.camera);
+    for (const goose of level.geese) goose.render(ctx, this.camera);
+    renderGoal(ctx, this.camera, level);
     this.player.render(ctx, this.camera, nowMs);
     for (const shot of this.projectiles) shot.render(ctx, this.camera);
 
-    renderHud(ctx, this.player);
+    renderThemeOverlay(ctx, level.theme); // mood wash over the world only
+    renderHud(ctx, this.player, level);
 
-    if (this.state === STATE.WIN) renderEndScreen(ctx, 'DEMO COMPLETE!', '#2a9d3f');
+    if (this.state === STATE.INTRO) {
+      renderCard(ctx, `LEVEL ${level.index + 1}`, level.name, level.subtitle);
+    }
+    if (this.state === STATE.LEVEL_CLEAR) {
+      renderCard(ctx, 'LEVEL CLEAR!', level.name, '+1 heart');
+    }
+    if (this.state === STATE.WIN) renderEndScreen(ctx, 'YOU WIN!', '#2a9d3f');
     if (this.state === STATE.GAMEOVER) renderEndScreen(ctx, 'GAME OVER', '#e63946');
 
-    drawMuteButton(ctx, Music.muted); // always last so it stays on top of end-screen overlays
+    drawMuteButton(ctx, Music.muted); // always last so it stays on top of overlays
   }
+}
+
+/** Centered banner used for both the level intro and the clear screen. */
+function renderCard(ctx, heading, name, note) {
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(0, GAME_HEIGHT / 2 - 52, GAME_WIDTH, 104);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffd23f';
+  ctx.font = "20px 'Press Start 2P', monospace";
+  ctx.fillText(heading, GAME_WIDTH / 2, GAME_HEIGHT / 2 - 16);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = "12px 'Press Start 2P', monospace";
+  ctx.fillText(name, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 10);
+
+  ctx.fillStyle = '#cdeeff';
+  ctx.font = "10px 'Press Start 2P', monospace";
+  ctx.fillText(note, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 32);
+  ctx.textAlign = 'left';
 }
 
 function drawMuteButton(ctx, muted) {
@@ -176,10 +294,15 @@ function insideRect(mx, my, r) {
   return mx >= r.x && mx <= r.x + r.width && my >= r.y && my <= r.y + r.height;
 }
 
-function renderHud(ctx, player) {
+function renderHud(ctx, player, level) {
   for (let i = 0; i < PLAYER_MAX_HEARTS; i++) {
     drawHeart(ctx, 16 + i * 26, 16, i < player.hearts);
   }
+
+  // Level counter, tucked under the hearts so it never fights the mute button.
+  ctx.font = "8px 'Press Start 2P', monospace";
+  ctx.fillStyle = 'rgba(0,0,0,0.65)';
+  ctx.fillText(`LEVEL ${level.index + 1}/${LEVEL_COUNT}  ${level.name}`, 16, 48);
 }
 
 function drawHeart(ctx, x, y, filled) {

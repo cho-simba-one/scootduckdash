@@ -3,6 +3,7 @@
 
 import { GAME_WIDTH, GAME_HEIGHT } from './constants.js';
 import { renderSky } from './background.js';
+import { LEVEL_COUNT } from './level.js';
 import { drawSprite } from './pixelArt.js';
 import { DUCK_IDLE, CLOUD, FARMHOUSE, BARN } from './sprites.js';
 
@@ -58,7 +59,7 @@ export function render(ctx, nowMs) {
 
   ctx.font = "12px 'Press Start 2P', monospace";
   ctx.fillStyle = '#1a1a1a';
-  ctx.fillText('Farmyard Demo', GAME_WIDTH / 2, 100);
+  ctx.fillText(`${LEVEL_COUNT} Levels`, GAME_WIDTH / 2, 100);
 
   // START button.
   const b = START_BUTTON;

@@ -57,10 +57,32 @@ js/                   all game code (ES modules)
 assets/icons/         generated PWA app icons
 ```
 
+## Levels
+
+Three levels, each with its own theme, width and hazards:
+
+| # | Name | Theme | New hazard |
+|---|------|-------|------------|
+| 1 | Farmyard Frolic | Day | Frogs (tongue attack) |
+| 2 | Orchard Sunset | Sunset | Patrolling geese |
+| 3 | Midnight Pond | Night | Moving hay carts |
+
+Levels are **pure data** in `js/levels.js`; `js/level.js` builds them. Adding a
+fourth level is a data edit, never a code edit. Hearts carry between levels and
+you get one back for clearing one.
+
+### Level design constraint
+Jump distance is finite, so a pond gap that's too wide makes a level literally
+unbeatable. `js/constants.js` fixes the physics; the derived maximum is
+**115.6px** (34 airborne frames x 3.4 max speed, simulated in the same
+gravity-then-position order `player.js` integrates -- the closed-form answer is
+~3px optimistic because airtime quantises to whole frames). Level data should
+keep every edge-to-edge gap under ~92px to leave a real margin.
+
 ## Roadmap (not in current demo scope)
 
 - Power-ups (speed boost, shield/star invincibility)
-- More levels / world map
+- More levels (just append to `js/levels.js`) / world map
 - Sound effects (jump/hit/pickup blips) to go with the new music
 - Score / lives / HUD polish
 - Real native APK/.exe build (Capacitor/Electron) -- needs Node.js + Android

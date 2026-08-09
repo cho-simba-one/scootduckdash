@@ -17,6 +17,7 @@ export class Player {
     this.vy = 0;
     this.facing = 1; // 1 = right, -1 = left
     this.grounded = false;
+    this.groundSolid = null; // what we're standing on, so carts can carry us
     this.ducking = false;
     this.hearts = PLAYER_MAX_HEARTS;
     this.invincibleUntil = 0;
@@ -102,6 +103,7 @@ export class Player {
     this.x += this.vx * dt;
     resolveAxis(this, solids, 'x');
     this.grounded = false;
+    this.groundSolid = null;
     this.y += this.vy * dt;
     resolveAxis(this, solids, 'y');
 
@@ -141,6 +143,7 @@ function resolveAxis(entity, solids, axis) {
       if (entity.vy > 0) {
         entity.y = solid.y - box.height;
         entity.grounded = true;
+        entity.groundSolid = solid; // remembered so moving platforms can carry us
       } else if (entity.vy < 0) {
         entity.y = solid.y + solid.height;
       }
