@@ -1,8 +1,13 @@
 // Duck Scooter Dash - offline app-shell cache.
 // Bump CACHE_NAME any time file contents change so clients pick up updates
 // instead of being stuck on a stale cached copy.
-const CACHE_NAME = 'duck-scooter-dash-v9';
+const CACHE_NAME = 'duck-scooter-dash-v10';
 
+// NOTE: every JS module must be listed here. cache.addAll() is all-or-nothing,
+// so a single missing/404 entry rejects the whole install -- but an entry that
+// is merely ABSENT fails silently in a nastier way: online users are fine
+// (network-first fetches it at runtime) while anyone who installs the PWA and
+// goes offline before playing gets a broken app shell.
 const APP_SHELL = [
   './',
   './index.html',
@@ -14,7 +19,9 @@ const APP_SHELL = [
   './js/enemy.js',
   './js/game.js',
   './js/input.js',
+  './js/hazards.js',
   './js/level.js',
+  './js/levels.js',
   './js/main.js',
   './js/pixelArt.js',
   './js/player.js',
