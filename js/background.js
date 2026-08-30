@@ -22,8 +22,7 @@ export function renderSky(ctx, theme = THEMES.day) {
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-  // Stars only make sense on the night theme.
-  if (theme === THEMES.night) {
+  if (theme.stars) {
     ctx.fillStyle = 'rgba(255,255,255,0.75)';
     for (let i = 0; i < 40; i++) {
       // Hashed scatter -- two plain linear sequences (i*97, i*53) produce a

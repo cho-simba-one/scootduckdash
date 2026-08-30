@@ -3,8 +3,8 @@
 // tangle -- retune a track here without touching audio-engine code.
 //
 // There is one TRACK per level, each matched to that level's theme. The
-// engine reads whichever track is selected; adding a fourth level means
-// adding a fourth track object here, nothing more.
+// engine reads whichever track is selected; adding a level means adding a
+// track object here, nothing more.
 
 // Equal-tempered note frequencies (A4 = 440Hz).
 const NOTE_FREQ = {
@@ -91,7 +91,48 @@ const MIDNIGHT = {
   clicks: [0, 7, 11],
 };
 
-export const TRACKS = [FARMYARD, ORCHARD, MIDNIGHT];
+// --- Track 4: Dawn Hayride -----------------------------------------------
+// Brighter pulse than Orchard, still not cheerful -- a running eighth-note
+// triangle that keeps you moving so the carts don't leave without you.
+const DAWN = {
+  name: 'Dawn Hayride',
+  bpm: 120,
+  loopSteps: 16,
+  bass: {
+    type: 'triangle', gain: 0.11, length: 0.9,
+    pattern: ['F3', null, 'C4', null, 'A3', null, 'C4', null,
+              'G3', null, 'D4', null, 'Bb3', null, 'D4', null],
+  },
+  lead: {
+    type: 'square', gain: 0.05, length: 0.8,
+    pattern: [null, 'A4', null, null, 'C5', null, null, 'F5',
+              null, null, 'E5', null, null, 'C5', null, null],
+  },
+  drone: { note: 'F2', type: 'sine', gain: 0.09 },
+  clicks: [0, 4, 8, 12],
+};
+
+// --- Track 5: Storm on the Pond ------------------------------------------
+// Low saw rumble, slow, minor. Clicks refuse a steady beat on purpose.
+const STORM = {
+  name: 'Storm on the Pond',
+  bpm: 88,
+  loopSteps: 16,
+  bass: {
+    type: 'sawtooth', gain: 0.08, length: 1.8,
+    pattern: ['G2', null, null, 'G2', null, null, 'Bb2', null,
+              'F2', null, null, 'F2', null, null, 'G2', null],
+  },
+  lead: {
+    type: 'triangle', gain: 0.05, length: 1.6,
+    pattern: [null, null, 'D4', null, null, null, null, 'Bb3',
+              null, null, null, 'G4', null, null, 'F4', null],
+  },
+  drone: { note: 'G2', type: 'sine', gain: 0.11 },
+  clicks: [0, 5, 9, 14],
+};
+
+export const TRACKS = [FARMYARD, ORCHARD, MIDNIGHT, DAWN, STORM];
 
 /** Track for a level index, clamped so extra levels reuse the last one. */
 export function trackFor(levelIndex) {

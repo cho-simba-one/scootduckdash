@@ -8,7 +8,7 @@ Cordova/Capacitor later for an actual app store build).
 ## Current scope (playable demo)
 
 - Title screen with mouse-clickable START button
-- One farmyard level: farmhouse, barn, pond, background dogs & geese
+- Five levels (farm day → orchard sunset → midnight pond → dawn hayride → storm)
 - Player controls:
   - Keyboard: Left / Right move, Up jump, Down duck, Space shoot
   - Touch (phones/tablets): on-screen buttons auto-appear on any touch-capable
@@ -59,17 +59,20 @@ assets/icons/         generated PWA app icons
 
 ## Levels
 
-Three levels, each with its own theme, width and hazards:
+Five levels, each with its own theme, width and hazards:
 
 | # | Name | Theme | New hazard | Music |
 |---|------|-------|------------|-------|
 | 1 | Farmyard Frolic | Day | Frogs (tongue attack) | 96bpm cold square-wave techno |
 | 2 | Orchard Sunset | Sunset | Patrolling geese | 112bpm walking triangle bass |
 | 3 | Midnight Pond | Night | Moving hay carts | 76bpm slow sine dread |
+| 4 | Dawn Hayride | Dawn | Cart timing across every pond | 120bpm running triangle |
+| 5 | Storm on the Pond | Storm | Back-to-back carts, no lily skip | 88bpm saw rumble |
 
-Levels are **pure data** in `js/levels.js`; `js/level.js` builds them. Adding a
-fourth level is a data edit, never a code edit. Hearts carry between levels and
-you get one back for clearing one.
+Levels are **pure data** in `js/levels.js`; `js/level.js` builds them. Adding
+another level is a data edit, never a code edit (plus a track in
+`js/musicData.js`). Hearts carry between levels and you get one back for
+clearing one.
 
 ### Level design constraint
 Jump distance is finite, so a pond gap that's too wide makes a level literally
