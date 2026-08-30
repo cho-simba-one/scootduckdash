@@ -13,7 +13,9 @@ import {
 } from './background.js';
 import * as titleScreen from './titleScreen.js';
 import { Music } from './music.js';
-import { isGod, onGodChange } from './cheats.js';
+import { isGod, onGodChange, requestCheatKeyboard } from './cheats.js';
+
+const HUD_HEARTS = { x: 8, y: 6, width: 86, height: 28 };
 
 const RESTART_BUTTON = { x: GAME_WIDTH / 2 - 90, y: 160, width: 180, height: 40 };
 const MUTE_BUTTON = { x: GAME_WIDTH - 34, y: 8, width: 26, height: 22 };
@@ -104,6 +106,14 @@ export class Game {
     }
     if (this.state === STATE.TITLE && titleScreen.isInsideButton(mx, my)) {
       this.startGame();
+      return;
+    }
+    if (this.state === STATE.TITLE && titleScreen.isInsideTitle(mx, my)) {
+      requestCheatKeyboard();
+      return;
+    }
+    if (this.state !== STATE.TITLE && insideRect(mx, my, HUD_HEARTS)) {
+      requestCheatKeyboard();
       return;
     }
     if ((this.state === STATE.WIN || this.state === STATE.GAMEOVER) && insideRect(mx, my, RESTART_BUTTON)) {

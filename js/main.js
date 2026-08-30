@@ -6,6 +6,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from './constants.js';
 import { Game, STATE } from './game.js';
 import { isInsideButton } from './titleScreen.js';
 import { setupTouchControls } from './touchControls.js';
+import { setupCheatEntry } from './cheats.js';
 
 const canvas = document.getElementById('game-canvas');
 canvas.width = GAME_WIDTH;
@@ -15,6 +16,7 @@ ctx.imageSmoothingEnabled = false;
 
 const game = new Game(ctx);
 const touchControls = setupTouchControls();
+setupCheatEntry(document.getElementById('cheat-entry'));
 
 function canvasPosFromEvent(evt) {
   const rect = canvas.getBoundingClientRect();

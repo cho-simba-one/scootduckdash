@@ -8,11 +8,31 @@ html, body {
 }
 
 #game-frame {
+  position: relative;
   width: 100vw;
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Hidden on purpose: iOS will not open a keyboard for display:none /
+   visibility:hidden fields. Opacity-0 + 16px font is the combo that
+   actually pops the OS keyboard after a tap. */
+#cheat-entry {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 8px;
+  height: 8px;
+  opacity: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font-size: 16px;
+  color: transparent;
+  background: transparent;
+  caret-color: transparent;
 }
 
 /* The canvas keeps its native 480x270 (16:9) aspect ratio and scales up

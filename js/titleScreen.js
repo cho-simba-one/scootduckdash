@@ -22,6 +22,11 @@ export function isInsideButton(mx, my) {
   return mx >= b.x && mx <= b.x + b.width && my >= b.y && my <= b.y + b.height;
 }
 
+/** Title wordmark + level count -- tap this on a phone to type IDDQD. */
+export function isInsideTitle(mx, my) {
+  return mx >= 24 && mx <= GAME_WIDTH - 24 && my >= 40 && my <= 115;
+}
+
 function fitFontSize(ctx, text, maxWidth, startSize) {
   let size = startSize;
   ctx.font = `${size}px 'Press Start 2P', monospace`;

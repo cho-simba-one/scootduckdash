@@ -9,8 +9,10 @@ REM Microsoft Store stub that exits 9009), so we must resolve the interpreter
 REM by absolute path. A dev shell inherits a richer PATH and hides this.
 cd /d "%~dp0"
 
-set "PYEXE=%APPDATA%\uv\python\cpython-3.14.6-windows-x86_64-none\pythonw.exe"
-if not exist "%PYEXE%" set "PYEXE=%APPDATA%\uv\python\cpython-3.11.15-windows-x86_64-none\pythonw.exe"
+REM python.exe, not pythonw.exe -- http.server logs to stderr, and pythonw
+REM has no stderr handle so every request dies while the port still listens.
+set "PYEXE=%APPDATA%\uv\python\cpython-3.14.6-windows-x86_64-none\python.exe"
+if not exist "%PYEXE%" set "PYEXE=%APPDATA%\uv\python\cpython-3.11.15-windows-x86_64-none\python.exe"
 if not exist "%PYEXE%" (
     echo Could not find a Python interpreter to serve the game.
     echo Looked in %APPDATA%\uv\python\
