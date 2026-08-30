@@ -13,6 +13,7 @@ import {
 } from './background.js';
 import * as titleScreen from './titleScreen.js';
 import { Music } from './music.js';
+import { isGod, onGodChange } from './cheats.js';
 
 const RESTART_BUTTON = { x: GAME_WIDTH / 2 - 90, y: 160, width: 180, height: 40 };
 const MUTE_BUTTON = { x: GAME_WIDTH - 34, y: 8, width: 26, height: 22 };
@@ -41,6 +42,15 @@ export class Game {
     this.levelIndex = 0;
     this.introUntil = 0;
     this.wasOnCart = false; // edge-detects landing on a cart, for its creak
+    onGodChange((on) => {
+      if (!on || !this.player) return;
+      this.player.dead = false;
+      this.player.hearts = PLAYER_MAX_HEARTS;
+      if (this.state === STATE.GAMEOVER) {
+        this.state = STATE.PLAYING;
+        Music.start();
+      }
+    });
   }
 
   startGame() {
@@ -269,9 +279,14 @@ export class Game {
       }
     }
     if (player.dead && this.state !== STATE.GAMEOVER) {
-      this.state = STATE.GAMEOVER;
-      Music.stop(); // main theme cuts out -- only the fanfare should play
-      Music.playGameOverJingle();
+      if (isGod()) {
+        player.dead = false;
+        player.hearts = PLAYER_MAX_HEARTS;
+      } else {
+        this.state = STATE.GAMEOVER;
+        Music.stop(); // main theme cuts out -- only the fanfare should play
+        Music.playGameOverJingle();
+      }
     }
 
     this.camera.follow(player.x);
@@ -356,8 +371,9 @@ function insideRect(mx, my, r) {
 }
 
 function renderHud(ctx, player, level) {
+  const gold = isGod();
   for (let i = 0; i < PLAYER_MAX_HEARTS; i++) {
-    drawHeart(ctx, 16 + i * 26, 16, i < player.hearts);
+    drawHeart(ctx, 16 + i * 26, 16, gold || i < player.hearts, gold);
   }
 
   // Level counter, below the high route. A bonus heart bobs through
@@ -369,8 +385,8 @@ function renderHud(ctx, player, level) {
   ctx.fillText(`LEVEL ${level.index + 1}/${LEVEL_COUNT}  ${level.name}`, 16, 66);
 }
 
-function drawHeart(ctx, x, y, filled) {
-  ctx.fillStyle = filled ? '#e63946' : 'rgba(0,0,0,0.15)';
+function drawHeart(ctx, x, y, filled, gold = false) {
+  ctx.fillStyle = filled ? (gold ? '#ffd23f' : '#e63946') : 'rgba(0,0,0,0.15)';
   ctx.beginPath();
   ctx.arc(x + 5, y + 5, 5, Math.PI, 0);
   ctx.arc(x + 15, y + 5, 5, Math.PI, 0);

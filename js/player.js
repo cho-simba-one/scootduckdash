@@ -4,7 +4,8 @@ import {
   PLAYER_STOMP_BOUNCE, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_DUCK_HEIGHT,
   PLAYER_MAX_HEARTS, PLAYER_INVINCIBLE_MS, PROJECTILE_COOLDOWN_MS,
 } from './constants.js';
-import { DUCK_IDLE, DUCK_RUN1, DUCK_RUN2, DUCK_JUMP, DUCK_DUCK } from './sprites.js';
+import { DUCK_IDLE, DUCK_RUN1, DUCK_RUN2, DUCK_JUMP, DUCK_DUCK, withWhiteEye } from './sprites.js';
+import { isGod } from './cheats.js';
 import { drawSprite, spriteSize } from './pixelArt.js';
 import { Input } from './input.js';
 import { Projectile } from './projectile.js';
@@ -54,6 +55,12 @@ export class Player {
 
   takeDamage(nowMs, knockbackFromX) {
     if (this.isInvincible(nowMs) || this.dead) return;
+    if (isGod()) {
+      // Knockback only -- the duck never loses a heart and never stays down.
+      this.vy = -5;
+      this.vx = this.x < knockbackFromX ? -3.5 : 3.5;
+      return;
+    }
     this.hearts -= 1;
     this.invincibleUntil = nowMs + PLAYER_INVINCIBLE_MS;
     this.vy = -5;
@@ -125,7 +132,8 @@ export class Player {
   render(ctx, camera, nowMs) {
     const flicker = this.isInvincible(nowMs) && Math.floor(nowMs / 90) % 2 === 0;
     if (flicker) return;
-    drawSprite(ctx, this.currentSprite(), this.x - camera.x, this.y, { flip: this.facing < 0 });
+    const grid = isGod() ? withWhiteEye(this.currentSprite()) : this.currentSprite();
+    drawSprite(ctx, grid, this.x - camera.x, this.y, { flip: this.facing < 0 });
   }
 }
 

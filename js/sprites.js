@@ -50,6 +50,12 @@ export const DUCK_RUN2 = patchRows(DUCK_IDLE, {
   12: '..kk.kk.........s....',
 });
 
+/** God-mode tell: the pupil `k` sitting in the yellow face becomes white.
+ * Only the first y/Y+k pair is swapped so handlebar and hat ink stay black. */
+export function withWhiteEye(grid) {
+  return grid.map((row) => row.replace(/([yY])k/, '$1w'));
+}
+
 export const DUCK_JUMP = patchRows(DUCK_IDLE, {
   10: '.yyoooooooyy....s....',
   11: '................s....',

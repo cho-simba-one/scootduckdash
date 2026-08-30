@@ -5,7 +5,8 @@ import { GAME_WIDTH, GAME_HEIGHT } from './constants.js';
 import { renderSky } from './background.js';
 import { LEVEL_COUNT } from './level.js';
 import { drawSprite } from './pixelArt.js';
-import { DUCK_IDLE, CLOUD, FARMHOUSE, BARN } from './sprites.js';
+import { DUCK_IDLE, CLOUD, FARMHOUSE, BARN, withWhiteEye } from './sprites.js';
+import { isGod } from './cheats.js';
 
 export const START_BUTTON = { x: GAME_WIDTH / 2 - 70, y: 185, width: 140, height: 40 };
 
@@ -43,7 +44,8 @@ export function render(ctx, nowMs) {
 
   // Bobbing hero duck, front and center.
   const bob = Math.sin(nowMs / 300) * 6;
-  drawSprite(ctx, DUCK_IDLE, GAME_WIDTH / 2 - 30, GAME_HEIGHT - 100 + bob, { scale: 3 });
+  const duck = isGod() ? withWhiteEye(DUCK_IDLE) : DUCK_IDLE;
+  drawSprite(ctx, duck, GAME_WIDTH / 2 - 30, GAME_HEIGHT - 100 + bob, { scale: 3 });
 
   // Title text with a chunky drop-shadow for that retro-cartridge look.
   // Auto-shrinks to fit so a slow web-font load (falls back to monospace,
