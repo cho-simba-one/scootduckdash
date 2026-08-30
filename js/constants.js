@@ -15,6 +15,7 @@ export const PLAYER_MAX_SPEED = 3.4;
 export const PLAYER_DUCK_MAX_SPEED = 1.2;
 export const PLAYER_JUMP_VELOCITY = -9.6;
 export const PLAYER_STOMP_BOUNCE = -6.5;
+export const PLAYER_PAD_BOUNCE = -11.4; // flower pads -- enough extra height to reach secret eggs
 
 export const PLAYER_WIDTH = 26;
 export const PLAYER_HEIGHT = 30;
@@ -74,7 +75,11 @@ export const PALETTE = {
   m: '#2c7a34', // grass dark green
   t: '#7a5230', // dirt ground
   a: '#5ab6e8', // pond water
-  A: '#3f8fc9' // pond water shadow
+  A: '#3f8fc9', // pond water shadow
+  P: '#e89ab0', // pig pink
+  B: '#f5d142', // bee gold
+  C: '#2b2b33', // crow black
+  u: '#7b5ea7'  // dusk purple
 };
 
 // NOTE: every palette key MUST be exactly one character -- sprite grids

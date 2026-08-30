@@ -129,6 +129,56 @@ export const LILYPAD = [
 // ---- Collectables ------------------------------------------------------
 // Reward for riding a vertical cart up to the high route. Drawn with the
 // existing red/white palette keys so it reads as a classic pickup heart.
+export const GOLD_EGG = [
+  '.hhhhh.',
+  'hHwHwhh',
+  'hhhhHhh',
+  'hHhhhhh',
+  '.hhhhh.',
+];
+
+export const BOUNCE_FLOWER = [
+  '...yyy...',
+  '..yYrYy..',
+  '...yry...',
+  '....g....',
+  '...ggg...',
+  '..ggggg..',
+];
+
+export const PIG = [
+  '....PPPP....',
+  '...PwwPwwP..',
+  '..PPPPPPPP..',
+  '.PPpPPPPpP.',
+  'PPPPPPPPPPPP',
+  'nP......Pn..',
+  'kk......kk..',
+];
+
+export const BEE = [
+  '.kkBBkk.',
+  'kByByByk',
+  '.kkBBkk.',
+  '..w...w.',
+];
+
+export const MOLE = [
+  '..nnnn..',
+  '.nNwwNn.',
+  'nnnnnnnn',
+  '.nNNNN.',
+  '..n..n..',
+];
+
+export const CROW = [
+  '...C.C....',
+  '..CCCCC...',
+  'CCCCCCCCCo',
+  '.CCwCCCC..',
+  '..CC.CC...',
+];
+
 export const HEART_PICKUP = [
   '.rr.rr.',
   'rwrrrrr',

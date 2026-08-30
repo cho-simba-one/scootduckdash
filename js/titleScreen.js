@@ -7,10 +7,14 @@ import { LEVEL_COUNT } from './level.js';
 import { drawSprite } from './pixelArt.js';
 import { DUCK_IDLE, CLOUD, FARMHOUSE, BARN, withWhiteEye } from './sprites.js';
 import { isGod } from './cheats.js';
+import { Music } from './music.js';
+import { eggCount, EGG_TOTAL, allEggsFound, armLuckyRun } from './secrets.js';
 
 export const START_BUTTON = { x: GAME_WIDTH / 2 - 70, y: 185, width: 140, height: 40 };
 
 let hovering = false;
+let duckTaps = 0;
+let lastDuckTap = 0;
 
 export function setHover(mx, my) {
   hovering = isInsideButton(mx, my);
@@ -25,6 +29,26 @@ export function isInsideButton(mx, my) {
 /** Title wordmark + level count -- tap this on a phone to type IDDQD. */
 export function isInsideTitle(mx, my) {
   return mx >= 24 && mx <= GAME_WIDTH - 24 && my >= 40 && my <= 115;
+}
+
+/** Head of the title duck, above the START button. */
+export function isInsideDuck(mx, my) {
+  const x = GAME_WIDTH / 2 - 30;
+  const y = GAME_HEIGHT - 108;
+  return mx >= x && mx <= x + 62 && my >= y && my < START_BUTTON.y;
+}
+
+/** Seven pecks on the title duck arms a lucky heart on the next run. */
+export function tapDuck() {
+  const now = performance.now();
+  if (now - lastDuckTap > 1600) duckTaps = 0;
+  lastDuckTap = now;
+  duckTaps += 1;
+  if (duckTaps >= 7) {
+    duckTaps = 0;
+    armLuckyRun();
+    Music.play('quack');
+  }
 }
 
 function fitFontSize(ctx, text, maxWidth, startSize) {
@@ -49,7 +73,9 @@ export function render(ctx, nowMs) {
 
   // Bobbing hero duck, front and center.
   const bob = Math.sin(nowMs / 300) * 6;
-  const duck = isGod() ? withWhiteEye(DUCK_IDLE) : DUCK_IDLE;
+  let duck = DUCK_IDLE;
+  if (allEggsFound()) duck = duck.map((row) => row.replace(/y/g, 'h').replace(/Y/g, 'H'));
+  if (isGod()) duck = withWhiteEye(duck);
   drawSprite(ctx, duck, GAME_WIDTH / 2 - 30, GAME_HEIGHT - 100 + bob, { scale: 3 });
 
   // Title text with a chunky drop-shadow for that retro-cartridge look.
@@ -67,6 +93,9 @@ export function render(ctx, nowMs) {
   ctx.font = "12px 'Press Start 2P', monospace";
   ctx.fillStyle = '#1a1a1a';
   ctx.fillText(`${LEVEL_COUNT} Levels`, GAME_WIDTH / 2, 100);
+  ctx.font = "10px 'Press Start 2P', monospace";
+  ctx.fillStyle = allEggsFound() ? '#ffd23f' : '#5e3c22';
+  ctx.fillText(`EGGS ${eggCount()}/${EGG_TOTAL}`, GAME_WIDTH / 2, 118);
 
   // START button.
   const b = START_BUTTON;

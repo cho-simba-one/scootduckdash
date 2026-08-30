@@ -132,7 +132,97 @@ const STORM = {
   clicks: [0, 5, 9, 14],
 };
 
-export const TRACKS = [FARMYARD, ORCHARD, MIDNIGHT, DAWN, STORM];
+const PIGPEN = {
+  name: 'Pig Pen',
+  bpm: 108,
+  loopSteps: 16,
+  bass: {
+    type: 'square', gain: 0.10, length: 1.0,
+    pattern: ['E3', null, 'E3', 'G3', null, 'E3', null, 'B3',
+              'E3', null, 'E3', 'G3', null, 'D3', null, 'E3'],
+  },
+  lead: {
+    type: 'sawtooth', gain: 0.045, length: 0.9,
+    pattern: [null, 'E5', null, null, 'G5', null, 'B4', null,
+              null, null, 'E5', null, null, 'D5', null, null],
+  },
+  drone: { note: 'E2', type: 'triangle', gain: 0.08 },
+  clicks: [0, 3, 8, 11],
+};
+
+const MEADOW = {
+  name: 'Bee Meadow',
+  bpm: 128,
+  loopSteps: 16,
+  bass: {
+    type: 'triangle', gain: 0.10, length: 0.7,
+    pattern: ['G3', 'D4', null, 'G3', 'A3', 'E4', null, 'A3',
+              'F3', 'C4', null, 'F3', 'G3', 'D4', null, 'G3'],
+  },
+  lead: {
+    type: 'square', gain: 0.05, length: 0.5,
+    pattern: ['G5', null, 'B4', null, 'D5', null, 'G5', null,
+              'A5', null, 'D5', null, 'G5', null, 'E5', null],
+  },
+  drone: { note: 'G2', type: 'sine', gain: 0.07 },
+  clicks: [0, 4, 6, 8, 12, 14],
+};
+
+const MOLES = {
+  name: 'Mole Patch',
+  bpm: 92,
+  loopSteps: 16,
+  bass: {
+    type: 'sine', gain: 0.12, length: 1.6,
+    pattern: ['D3', null, null, 'A2', null, null, 'D3', null,
+              'C3', null, null, 'G2', null, null, 'Bb2', null],
+  },
+  lead: {
+    type: 'triangle', gain: 0.05, length: 1.8,
+    pattern: [null, null, 'D4', null, null, null, 'F4', null,
+              null, null, 'A4', null, null, 'G4', null, null],
+  },
+  drone: { note: 'D2', type: 'sine', gain: 0.10 },
+  clicks: [0, 6, 13],
+};
+
+const GALE = {
+  name: 'Crow Ridge',
+  bpm: 118,
+  loopSteps: 16,
+  bass: {
+    type: 'sawtooth', gain: 0.08, length: 1.1,
+    pattern: ['A2', null, 'E3', null, 'A2', null, 'C3', null,
+              'G2', null, 'D3', null, 'G2', null, 'Bb2', null],
+  },
+  lead: {
+    type: 'triangle', gain: 0.055, length: 1.2,
+    pattern: ['E5', null, null, 'C5', null, 'A4', null, null,
+              'D5', null, null, 'Bb4', null, 'G4', null, null],
+  },
+  drone: { note: 'A1', type: 'sine', gain: 0.09 },
+  clicks: [0, 2, 8, 10],
+};
+
+const FAIR = {
+  name: 'Moonlit Fair',
+  bpm: 100,
+  loopSteps: 16,
+  bass: {
+    type: 'square', gain: 0.09, length: 1.4,
+    pattern: ['C3', null, 'G3', null, 'Eb3', null, 'Bb2', null,
+              'C3', null, 'G3', null, 'F3', null, 'G2', null],
+  },
+  lead: {
+    type: 'sawtooth', gain: 0.04, length: 1.5,
+    pattern: [null, 'G4', null, 'C5', null, null, 'Eb5', null,
+              null, 'D5', null, null, 'Bb4', null, 'G4', null],
+  },
+  drone: { note: 'C2', type: 'triangle', gain: 0.10 },
+  clicks: [0, 5, 8, 13],
+};
+
+export const TRACKS = [FARMYARD, ORCHARD, MIDNIGHT, DAWN, STORM, PIGPEN, MEADOW, MOLES, GALE, FAIR];
 
 /** Track for a level index, clamped so extra levels reuse the last one. */
 export function trackFor(levelIndex) {

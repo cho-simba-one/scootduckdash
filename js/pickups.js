@@ -7,17 +7,23 @@
 // the game loop, so adding a new pickup type never means editing this file's
 // existing behaviour.
 
-import { HEART_PICKUP } from './sprites.js';
+import { HEART_PICKUP, GOLD_EGG } from './sprites.js';
 import { drawSprite, spriteSize } from './pixelArt.js';
 
 const COLLECT_FADE_MS = 400;
 
+function spriteFor(kind) {
+  return kind === 'egg' ? GOLD_EGG : HEART_PICKUP;
+}
+
 export class Pickup {
   /** @param {string} kind - what the game loop should grant, e.g. 'heart'. */
   constructor(x, y, kind = 'heart') {
-    const size = spriteSize(HEART_PICKUP, 3);
+    const grid = spriteFor(kind);
+    const size = spriteSize(grid, 3);
     this.width = size.width;
     this.height = size.height;
+    this.grid = grid;
     this.x = x;
     this.baseY = y;
     this.y = y;
@@ -53,11 +59,11 @@ export class Pickup {
     if (this.collected) {
       // Float up and fade out -- confirms the pickup registered.
       const t = Math.max(0, this.fade / COLLECT_FADE_MS);
-      drawSprite(ctx, HEART_PICKUP, screenX, this.y - (1 - t) * 24, {
+      drawSprite(ctx, this.grid, screenX, this.y - (1 - t) * 24, {
         scale: 3, alpha: t,
       });
       return;
     }
-    drawSprite(ctx, HEART_PICKUP, screenX, this.y, { scale: 3 });
+    drawSprite(ctx, this.grid, screenX, this.y, { scale: 3 });
   }
 }

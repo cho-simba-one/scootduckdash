@@ -7,6 +7,8 @@ import { LEVELS, LEVEL_COUNT } from './levels.js';
 import { Frog } from './enemy.js';
 import { Goose, Cart } from './hazards.js';
 import { Pickup } from './pickups.js';
+import { Pig, Bee, Mole, Crow, BouncePad } from './critters.js';
+import { hasEgg } from './secrets.js';
 import { spriteSize } from './pixelArt.js';
 import { HAY_BALE, LILYPAD } from './sprites.js';
 
@@ -51,7 +53,9 @@ export function createLevel(index = 0) {
   const carts = [];
   // Optional in the data: levels without bonuses simply omit the key rather
   // than carrying an empty array around.
-  const pickups = (data.pickups ?? []).map(([x, y, kind]) => new Pickup(x, y, kind));
+  const pickups = (data.pickups ?? [])
+    .filter(([x, y, kind]) => kind !== 'egg' || !hasEgg(index))
+    .map(([x, y, kind]) => new Pickup(x, y, kind));
 
   for (const [x, width] of data.ground) solids.push(groundStrip(x, width));
   for (const [x, y] of data.hay) solids.push(hayPlatform(x, y));
@@ -64,13 +68,29 @@ export function createLevel(index = 0) {
   for (const [centerX, topY] of data.frogs) frogs.push(new Frog(centerX, topY));
   for (const [x, y, patrol] of data.geese) geese.push(new Goose(x, y, patrol));
 
-  for (const [x, y, range, axis] of data.carts) {
+  for (const [x, y, range, axis] of (data.carts ?? [])) {
     const cart = new Cart(x, y, range, axis);
     carts.push(cart);
     // The cart's solid is mutated in place each frame, so pushing it once
     // here is enough -- collision code stays blissfully unaware it moves.
     solids.push(cart.solid);
   }
+
+  // Low rails: standing hits them, ducking slips under. Height 10 so
+  // renderTerrain does not mistake them for lily pads (those are also
+  // short) -- tagged isBeam and drawn separately.
+  const beams = [];
+  for (const [x, width] of (data.beams ?? [])) {
+    const beam = { x, y: GROUND_Y - 30, width, height: 10, isBeam: true };
+    beams.push(beam);
+    solids.push(beam);
+  }
+
+  const pigs = (data.pigs ?? []).map(([x]) => new Pig(x));
+  const bees = (data.bees ?? []).map(([x, y, patrol]) => new Bee(x, y, patrol));
+  const moles = (data.moles ?? []).map(([x]) => new Mole(x));
+  const crows = (data.crows ?? []).map(([x, y, span]) => new Crow(x, y, span));
+  const bounces = (data.bounces ?? []).map(([x, y]) => new BouncePad(x, y));
 
   const ponds = data.ponds.map(([x, endX]) => ({ x, width: endX - x }));
 
@@ -96,9 +116,12 @@ export function createLevel(index = 0) {
     index,
     name: data.name,
     subtitle: data.subtitle,
+    skill: data.skill || '',
     theme: data.theme,
     width: data.width,
+    wind: data.wind || 0,
     solids, lilyPads, frogs, geese, carts, pickups, ponds, checkpoints,
+    pigs, bees, moles, crows, bounces, beams,
     buildings, animals, goal,
     clouds: scatterClouds(data.width),
   };

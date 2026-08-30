@@ -125,4 +125,43 @@ export const SFX = {
       });
     });
   },
+
+  pig(ctx, dest) {
+    tone(ctx, dest, { from: 240, to: 140, dur: 0.18, type: 'square', gain: 0.11 });
+    noise(ctx, dest, { dur: 0.14, freq: 400, sweepTo: 120, gain: 0.07 });
+  },
+
+  bee(ctx, dest) {
+    tone(ctx, dest, { from: 880, to: 1400, dur: 0.08, type: 'square', gain: 0.06 });
+    tone(ctx, dest, { from: 900, to: 1500, dur: 0.08, type: 'square', gain: 0.04, delay: 0.04 });
+  },
+
+  mole(ctx, dest) {
+    noise(ctx, dest, { dur: 0.18, type: 'lowpass', freq: 500, sweepTo: 90, gain: 0.1 });
+    tone(ctx, dest, { from: 160, to: 70, dur: 0.16, type: 'triangle', gain: 0.07 });
+  },
+
+  crow(ctx, dest) {
+    tone(ctx, dest, { from: 640, to: 280, dur: 0.2, type: 'sawtooth', gain: 0.09 });
+    tone(ctx, dest, { from: 650, to: 290, dur: 0.2, type: 'sawtooth', gain: 0.05 });
+  },
+
+  bounce(ctx, dest) {
+    tone(ctx, dest, { from: 400, to: 920, dur: 0.16, type: 'triangle', gain: 0.11 });
+    tone(ctx, dest, { from: 600, to: 1200, dur: 0.12, type: 'square', gain: 0.05, delay: 0.04 });
+  },
+
+  quack(ctx, dest) {
+    tone(ctx, dest, { from: 380, to: 220, dur: 0.14, type: 'sawtooth', gain: 0.12 });
+    tone(ctx, dest, { from: 260, to: 140, dur: 0.18, type: 'square', gain: 0.08, delay: 0.05 });
+  },
+
+  egg(ctx, dest) {
+    const notes = [659.25, 783.99, 987.77, 1318.51];
+    notes.forEach((freq, i) => {
+      tone(ctx, dest, {
+        from: freq, dur: 0.18, type: 'triangle', gain: 0.14, delay: i * 0.07,
+      });
+    });
+  },
 };

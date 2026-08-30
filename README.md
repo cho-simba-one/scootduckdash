@@ -8,7 +8,7 @@ Cordova/Capacitor later for an actual app store build).
 ## Current scope (playable demo)
 
 - Title screen with mouse-clickable START button
-- Five levels (farm day → orchard sunset → midnight pond → dawn hayride → storm)
+- Ten levels, each with its own track, a START button, and a skill to learn
 - Player controls:
   - Keyboard: Left / Right move, Up jump, Down duck, Space shoot
   - Touch (phones/tablets): on-screen buttons auto-appear on any touch-capable
@@ -59,15 +59,20 @@ assets/icons/         generated PWA app icons
 
 ## Levels
 
-Five levels, each with its own theme, width and hazards:
+Ten levels. Each one teaches a skill, has its own track, and waits on a START button.
 
-| # | Name | Theme | New hazard | Music |
-|---|------|-------|------------|-------|
-| 1 | Farmyard Frolic | Day | Frogs (tongue attack) | 96bpm cold square-wave techno |
-| 2 | Orchard Sunset | Sunset | Patrolling geese | 112bpm walking triangle bass |
-| 3 | Midnight Pond | Night | Moving hay carts | 76bpm slow sine dread |
-| 4 | Dawn Hayride | Dawn | Cart timing across every pond | 120bpm running triangle |
-| 5 | Storm on the Pond | Storm | Back-to-back carts, no lily skip | 88bpm saw rumble |
+| # | Name | New skill | Music |
+|---|------|-----------|-------|
+| 1 | Farmyard Frolic | Frogs (tongue) | 96bpm square techno |
+| 2 | Orchard Sunset | Patrolling geese | 112bpm triangle bass |
+| 3 | Midnight Pond | Moving hay carts | 76bpm sine dread |
+| 4 | Dawn Hayride | Cart timing | 120bpm running triangle |
+| 5 | Storm on the Pond | Back-to-back carts | 88bpm saw rumble |
+| 6 | Pig Pen | Jump pigs, duck rails | 108bpm square stomp |
+| 7 | Bee Meadow | Shoot bees, bounce pads | 128bpm buzz |
+| 8 | Mole Patch | Wait out popping moles | 92bpm dirt pulse |
+| 9 | Crow Ridge | Wind + bounce for height | 118bpm gale |
+| 10 | Moonlit Fair | Everything at once | 100bpm carnival minor |
 
 Levels are **pure data** in `js/levels.js`; `js/level.js` builds them. Adding
 another level is a data edit, never a code edit (plus a track in

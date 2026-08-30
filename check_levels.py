@@ -175,8 +175,8 @@ def check_pond(name, a, b, lv) -> list[str]:
 
 def main():
     levels = parse_levels(LEVELS_JS.read_text(encoding="utf-8"))
-    if len(levels) < 5:
-        raise SystemExit(f"expected at least 5 levels, parsed {len(levels)}")
+    if len(levels) < 10:
+        raise SystemExit(f"expected at least 10 levels, parsed {len(levels)}")
     fails = []
     for lv in levels:
         fails.extend(check_level(lv))

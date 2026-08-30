@@ -232,6 +232,7 @@ class MusicPlayer {
    * throwing -- gameplay must never depend on audio being available.
    */
   play(effectName) {
+    this.ensureContext();
     if (!this.ctx || this.muted) return;
     const effect = SFX[effectName];
     if (effect) effect(this.ctx, this.master);

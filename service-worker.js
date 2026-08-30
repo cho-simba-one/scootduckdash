@@ -1,7 +1,7 @@
 // Duck Scooter Dash - offline app-shell cache.
 // Bump CACHE_NAME any time file contents change so clients pick up updates
 // instead of being stuck on a stale cached copy.
-const CACHE_NAME = 'duck-scooter-dash-v15';
+const CACHE_NAME = 'duck-scooter-dash-v16';
 
 // NOTE: every JS module must be listed here. cache.addAll() is all-or-nothing,
 // so a single missing/404 entry rejects the whole install -- but an entry that
@@ -17,6 +17,7 @@ const APP_SHELL = [
   './js/camera.js',
   './js/cheats.js',
   './js/constants.js',
+  './js/critters.js',
   './js/enemy.js',
   './js/game.js',
   './js/input.js',
@@ -28,6 +29,7 @@ const APP_SHELL = [
   './js/pixelArt.js',
   './js/player.js',
   './js/projectile.js',
+  './js/secrets.js',
   './js/sfx.js',
   './js/sprites.js',
   './js/titleScreen.js',

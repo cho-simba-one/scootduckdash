@@ -6,8 +6,10 @@
 import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, PLAYER_HEIGHT, PLAYER_MAX_HEARTS } from './constants.js';
 import { Input } from './input.js';
 import { Player, overlaps } from './player.js';
+import { Pickup } from './pickups.js';
 import { Camera } from './camera.js';
 import { createLevel, LEVEL_COUNT } from './level.js';
+import { markEgg, consumeLuckyRun, eggCount, EGG_TOTAL, allEggsFound } from './secrets.js';
 import {
   renderSky, renderBackground, renderTerrain, renderGoal, renderThemeOverlay,
 } from './background.js';
@@ -19,7 +21,7 @@ const HUD_HEARTS = { x: 8, y: 6, width: 86, height: 28 };
 
 const RESTART_BUTTON = { x: GAME_WIDTH / 2 - 90, y: 160, width: 180, height: 40 };
 const MUTE_BUTTON = { x: GAME_WIDTH - 34, y: 8, width: 26, height: 22 };
-const LEVEL_INTRO_MS = 1600; // "LEVEL n" card shown before play begins
+const LEVEL_START_BUTTON = { x: GAME_WIDTH / 2 - 70, y: GAME_HEIGHT / 2 + 40, width: 140, height: 36 };
 // Longer than the intro so the clear fanfare gets to finish before the next
 // level's track kicks in -- cutting your own victory music off feels cheap.
 const LEVEL_CLEAR_MS = 3200;
@@ -44,6 +46,9 @@ export class Game {
     this.levelIndex = 0;
     this.introUntil = 0;
     this.wasOnCart = false; // edge-detects landing on a cart, for its creak
+    this.introHover = false;
+    this.shotsThisLevel = 0;
+    this.ignoreShoot = false;
     onGodChange((on) => {
       if (!on || !this.player) return;
       this.player.dead = false;
@@ -70,10 +75,19 @@ export class Game {
     this.camera = new Camera(this.level.width);
     this.camera.follow(this.player.x);
     this.projectiles = [];
-    this.introUntil = performance.now() + LEVEL_INTRO_MS;
+    this.shotsThisLevel = 0;
+    this.ignoreShoot = false;
     this.state = STATE.INTRO;
     Music.setLevel(index);       // each level gets its own track
     Music.restoreMusicLevel();   // undo any ducking from the clear fanfare
+    if (consumeLuckyRun()) {
+      this.level.pickups.push(new Pickup(80, GROUND_Y - 54, 'heart'));
+    }
+  }
+
+  beginLevel() {
+    this.state = STATE.PLAYING;
+    this.ignoreShoot = true;
   }
 
   advanceLevel() {
@@ -86,7 +100,10 @@ export class Game {
     }
     // Reward clearing a level with a heart back (capped) so a rough level
     // doesn't doom the whole run.
-    const hearts = Math.min(PLAYER_MAX_HEARTS, this.player.hearts + 1);
+    let hearts = Math.min(PLAYER_MAX_HEARTS, this.player.hearts + 1);
+    if (this.shotsThisLevel === 0) {
+      hearts = Math.min(PLAYER_MAX_HEARTS, hearts + 1);
+    }
     this.loadLevel(next, hearts);
     Music.start();
   }
@@ -97,6 +114,7 @@ export class Game {
 
   handleMouseMove(mx, my) {
     if (this.state === STATE.TITLE) titleScreen.setHover(mx, my);
+    if (this.state === STATE.INTRO) this.introHover = insideRect(mx, my, LEVEL_START_BUTTON);
   }
 
   handleClick(mx, my) {
@@ -106,6 +124,14 @@ export class Game {
     }
     if (this.state === STATE.TITLE && titleScreen.isInsideButton(mx, my)) {
       this.startGame();
+      return;
+    }
+    if (this.state === STATE.TITLE && titleScreen.isInsideDuck(mx, my)) {
+      titleScreen.tapDuck();
+      return;
+    }
+    if (this.state === STATE.INTRO && insideRect(mx, my, LEVEL_START_BUTTON)) {
+      this.beginLevel();
       return;
     }
     if (this.state === STATE.TITLE && titleScreen.isInsideTitle(mx, my)) {
@@ -122,9 +148,10 @@ export class Game {
   }
 
   update(dtMs, nowMs) {
-    // Intro and level-clear cards are timed pauses -- the world holds still.
+    // Intro waits on START (click/tap or Space). Level-clear is still timed
+    // so the fanfare can finish.
     if (this.state === STATE.INTRO) {
-      if (nowMs >= this.introUntil) this.state = STATE.PLAYING;
+      if (Input.shoot()) this.beginLevel();
       return;
     }
     if (this.state === STATE.LEVEL_CLEAR) {
@@ -152,6 +179,20 @@ export class Game {
 
     player.update(dtMs, level.solids, nowMs);
 
+    if (level.wind && !player.grounded) {
+      player.vx += level.wind * (dtMs / 16.6667);
+    }
+
+    for (const pad of level.bounces) {
+      pad.update(dtMs);
+      if (player.vy > 0.4 && overlaps(player.getHitbox(), pad.getHitbox())) {
+        player.vy = pad.bounce();
+        player.grounded = false;
+        player.groundSolid = null;
+        Music.play('bounce');
+      }
+    }
+
     // Left the ground under his own power (not knocked back) -- that's a jump.
     if (wasGrounded && !player.grounded && player.vy < 0) Music.play('jump');
 
@@ -172,15 +213,23 @@ export class Game {
 
       if (pickup.collect()) {
         if (pickup.kind === 'heart') player.hearts += 1;
-        Music.play('pickup');
+        if (pickup.kind === 'egg') {
+          markEgg(this.levelIndex);
+          Music.play('egg');
+        } else {
+          Music.play('pickup');
+        }
       }
     }
     level.pickups = level.pickups.filter((p) => !p.dead);
 
-    if (Input.shoot()) {
+    if (this.ignoreShoot) {
+      this.ignoreShoot = false;
+    } else if (Input.shoot()) {
       const shot = player.tryShoot(nowMs);
       if (shot) {
         this.projectiles.push(shot);
+        this.shotsThisLevel += 1;
         Music.play('shoot');
       }
     }
@@ -261,6 +310,30 @@ export class Game {
     }
     level.geese = level.geese.filter((g) => !g.dead);
 
+    for (const pig of level.pigs) {
+      pig.update(dtMs, nowMs, playerBox);
+      hitFoe(player, playerBox, this.projectiles, pig, nowMs, 'pig');
+    }
+    level.pigs = level.pigs.filter((p) => !p.dead);
+
+    for (const bee of level.bees) {
+      bee.update(dtMs);
+      hitFoe(player, playerBox, this.projectiles, bee, nowMs, 'bee');
+    }
+    level.bees = level.bees.filter((b) => !b.dead);
+
+    for (const mole of level.moles) {
+      mole.update(dtMs);
+      hitFoe(player, playerBox, this.projectiles, mole, nowMs, 'mole');
+    }
+    level.moles = level.moles.filter((m) => !m.dead);
+
+    for (const crow of level.crows) {
+      crow.update(dtMs);
+      hitFoe(player, playerBox, this.projectiles, crow, nowMs, 'crow');
+    }
+    level.crows = level.crows.filter((c) => !c.dead);
+
     // Fell in a pond -- ouch, respawn at the last checkpoint reached.
     if (player.y > GAME_HEIGHT + 60) {
       Music.play('splash');
@@ -317,8 +390,13 @@ export class Game {
     renderBackground(ctx, this.camera, level, nowMs);
     renderTerrain(ctx, this.camera, level);
     for (const cart of level.carts) cart.render(ctx, this.camera);
+    for (const pad of level.bounces) pad.render(ctx, this.camera);
     for (const pickup of level.pickups) pickup.render(ctx, this.camera);
     for (const frog of level.frogs) frog.render(ctx, this.camera);
+    for (const pig of level.pigs) pig.render(ctx, this.camera);
+    for (const bee of level.bees) bee.render(ctx, this.camera);
+    for (const mole of level.moles) mole.render(ctx, this.camera);
+    for (const crow of level.crows) crow.render(ctx, this.camera);
     for (const goose of level.geese) goose.render(ctx, this.camera);
     renderGoal(ctx, this.camera, level);
     this.player.render(ctx, this.camera, nowMs);
@@ -328,36 +406,99 @@ export class Game {
     renderHud(ctx, this.player, level);
 
     if (this.state === STATE.INTRO) {
-      renderCard(ctx, `LEVEL ${level.index + 1}`, level.name, level.subtitle);
+      renderCard(
+        ctx,
+        `LEVEL ${level.index + 1}/${LEVEL_COUNT}`,
+        level.name,
+        level.skill || level.subtitle,
+        { button: 'START', hover: this.introHover },
+      );
     }
     if (this.state === STATE.LEVEL_CLEAR) {
       renderCard(ctx, 'LEVEL CLEAR!', level.name, '+1 heart');
     }
-    if (this.state === STATE.WIN) renderEndScreen(ctx, 'YOU WIN!', '#2a9d3f');
+    if (this.state === STATE.WIN) {
+    renderEndScreen(ctx, allEggsFound() ? 'EGG HUNTER!' : 'YOU WIN!', '#2a9d3f');
+  }
     if (this.state === STATE.GAMEOVER) renderEndScreen(ctx, 'GAME OVER', '#e63946');
 
     drawMuteButton(ctx, Music.muted); // always last so it stays on top of overlays
   }
 }
 
+function hitFoe(player, playerBox, shots, foe, nowMs, sfx) {
+  const box = foe.getHitbox();
+  if (!box) return;
+  if (overlaps(playerBox, box)) {
+    const stompDepth = playerBox.y + playerBox.height - box.y;
+    const isStomp = player.vy > 0 && stompDepth < box.height * 0.65;
+    if (isStomp) {
+      foe.stomp();
+      player.stompBounce();
+      Music.play('stomp');
+      Music.play(sfx);
+    } else {
+      player.takeDamage(nowMs, foe.x);
+    }
+  }
+  for (const shot of shots) {
+    if (!shot.dead && overlaps(shot.getHitbox(), box)) {
+      foe.killByProjectile();
+      shot.dead = true;
+      Music.play(sfx);
+    }
+  }
+}
+
 /** Centered banner used for both the level intro and the clear screen. */
-function renderCard(ctx, heading, name, note) {
-  ctx.fillStyle = 'rgba(0,0,0,0.5)';
-  ctx.fillRect(0, GAME_HEIGHT / 2 - 52, GAME_WIDTH, 104);
+function renderCard(ctx, heading, name, note, opts = {}) {
+  const tall = !!opts.button;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(0, GAME_HEIGHT / 2 - (tall ? 78 : 52), GAME_WIDTH, tall ? 168 : 104);
 
   ctx.textAlign = 'center';
   ctx.fillStyle = '#ffd23f';
-  ctx.font = "20px 'Press Start 2P', monospace";
-  ctx.fillText(heading, GAME_WIDTH / 2, GAME_HEIGHT / 2 - 16);
+  ctx.font = "16px 'Press Start 2P', monospace";
+  ctx.fillText(heading, GAME_WIDTH / 2, GAME_HEIGHT / 2 - (tall ? 44 : 16));
 
   ctx.fillStyle = '#ffffff';
   ctx.font = "12px 'Press Start 2P', monospace";
-  ctx.fillText(name, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 10);
+  ctx.fillText(name, GAME_WIDTH / 2, GAME_HEIGHT / 2 - (tall ? 18 : -10));
 
   ctx.fillStyle = '#cdeeff';
-  ctx.font = "10px 'Press Start 2P', monospace";
-  ctx.fillText(note, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 32);
+  ctx.font = "8px 'Press Start 2P', monospace";
+  wrapText(ctx, note, GAME_WIDTH / 2, GAME_HEIGHT / 2 + (tall ? 4 : 32), GAME_WIDTH - 40, 12);
+
+  if (opts.button) {
+    const b = LEVEL_START_BUTTON;
+    ctx.fillStyle = opts.hover ? '#ffe873' : '#ffd23f';
+    ctx.fillRect(b.x, b.y, b.width, b.height);
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(b.x, b.y, b.width, b.height);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = "14px 'Press Start 2P', monospace";
+    ctx.fillText(opts.button, GAME_WIDTH / 2, b.y + 24);
+  }
   ctx.textAlign = 'left';
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  if (!text) return;
+  const words = text.split(' ');
+  let line = '';
+  let yy = y;
+  for (const word of words) {
+    const test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, yy);
+      line = word;
+      yy += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  if (line) ctx.fillText(line, x, yy);
 }
 
 function drawMuteButton(ctx, muted) {
@@ -393,6 +534,8 @@ function renderHud(ctx, player, level) {
   ctx.font = "8px 'Press Start 2P', monospace";
   ctx.fillStyle = 'rgba(0,0,0,0.65)';
   ctx.fillText(`LEVEL ${level.index + 1}/${LEVEL_COUNT}  ${level.name}`, 16, 66);
+  ctx.fillStyle = '#e0b23a';
+  ctx.fillText(`EGGS ${eggCount()}/${EGG_TOTAL}`, 16, 80);
 }
 
 function drawHeart(ctx, x, y, filled, gold = false) {

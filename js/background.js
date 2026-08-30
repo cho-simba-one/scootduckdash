@@ -94,6 +94,14 @@ export function renderTerrain(ctx, camera, level) {
     const screenX = solid.x - camera.x;
     if (screenX + solid.width < 0 || screenX > GAME_WIDTH) continue;
 
+    if (solid.isBeam) {
+      ctx.fillStyle = '#5e3c22';
+      ctx.fillRect(screenX, solid.y, solid.width, solid.height);
+      ctx.fillStyle = '#e0b23a';
+      ctx.fillRect(screenX, solid.y, solid.width, 3);
+      continue;
+    }
+
     // Lily pads and hay bales are drawn as themselves; wide ground strips
     // get tiled with the grass/dirt tile texture.
     if (solid.height <= 12) {
