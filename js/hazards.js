@@ -139,10 +139,12 @@ export class Cart {
     const y = this.solid.y;
     const w = this.width;
     if (this.city) {
-      ctx.fillStyle = '#6a6a74';
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(screenX - 1, y - 1, w + 2, 12);
+      ctx.fillStyle = '#ffd23f';
       ctx.fillRect(screenX, y, w, 10);
-      ctx.fillStyle = '#f1c40f';
-      ctx.fillRect(screenX + 2, y, w - 4, 3);
+      ctx.fillStyle = '#111111';
+      for (let i = 0; i < w; i += 10) ctx.fillRect(screenX + i, y, 5, 10);
       ctx.fillStyle = '#1a1a1a';
       for (const wx of [screenX + 8, screenX + w - 16]) {
         ctx.beginPath();

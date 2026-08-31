@@ -570,6 +570,7 @@ export class Game {
     const level = this.level;
     renderSky(ctx, level.theme);
     renderBackground(ctx, this.camera, level, nowMs);
+    renderThemeOverlay(ctx, level.theme); // scenery only -- platforms stay readable
     renderTerrain(ctx, this.camera, level, nowMs);
     for (const cart of level.carts) cart.render(ctx, this.camera);
     for (const taxi of level.taxis) taxi.render(ctx, this.camera);
@@ -594,7 +595,6 @@ export class Game {
     this.player.render(ctx, this.camera, nowMs);
     for (const shot of this.projectiles) shot.render(ctx, this.camera);
 
-    renderThemeOverlay(ctx, level.theme); // mood wash over the world only
     renderHud(ctx, this.player, level);
 
     if (this.state === STATE.INTRO) {

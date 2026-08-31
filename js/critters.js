@@ -268,16 +268,19 @@ export class BouncePad {
     ctx.translate(this.x - camera.x + this.width / 2, this.y + this.height);
     ctx.scale(1 + this.squash * 0.2, squish);
     if (this.city) {
-      ctx.fillStyle = '#6a6a74';
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(-this.width / 2 - 1, -11, this.width + 2, 12);
+      ctx.fillStyle = '#ffd23f';
       ctx.fillRect(-this.width / 2, -10, this.width, 10);
-      ctx.fillStyle = '#f1c40f';
-      ctx.fillRect(-this.width / 2 + 2, -10, this.width - 4, 3);
-      ctx.strokeStyle = '#8d99ae';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#111111';
+      ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(-6, -10);
       ctx.quadraticCurveTo(-10, -this.height + 4, 0, -this.height);
       ctx.quadraticCurveTo(10, -this.height + 4, 6, -10);
+      ctx.stroke();
+      ctx.strokeStyle = '#ffd23f';
+      ctx.lineWidth = 2;
       ctx.stroke();
     } else {
       drawSprite(ctx, BOUNCE_FLOWER, -this.width / 2, -this.height);

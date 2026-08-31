@@ -165,6 +165,10 @@ export class Taxi {
   render(ctx, camera) {
     const screenX = this.solid.x - camera.x;
     drawSprite(ctx, TAXI, screenX, this.solid.y - 10, { scale: 2 });
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(screenX - 1, this.solid.y - 2, this.width + 2, 5);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(screenX + 4, this.solid.y - 1, this.width - 8, 3);
   }
 }
 
@@ -205,9 +209,11 @@ export class Hydrant {
     ctx.fillRect(screenX + 4, GROUND_Y - 22, 6, 6);
     const jet = this.getHitbox();
     if (!jet) return;
-    ctx.fillStyle = 'rgba(90,180,230,0.55)';
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(jet.x - camera.x - 1, jet.y - 1, jet.width + 2, jet.height + 2);
+    ctx.fillStyle = '#5ad0ff';
     ctx.fillRect(jet.x - camera.x, jet.y, jet.width, jet.height);
-    ctx.fillStyle = 'rgba(180,220,255,0.7)';
+    ctx.fillStyle = '#ffffff';
     for (let i = 0; i < 5; i++) {
       const drop = (this.t / 40 + i * 17) % jet.width;
       ctx.fillRect(jet.x - camera.x + drop, jet.y + (i % 3) * 4, 4, 3);
@@ -251,8 +257,8 @@ export class Geyser {
     const puff = ((this.t / 80) % 10);
     for (let i = 0; i < 4; i++) {
       const rise = (puff + i * 14) % 64;
-      ctx.fillStyle = `rgba(220,220,230,${0.5 - i * 0.08})`;
-      ctx.fillRect(screenX + 2 + (i % 2) * 4, GROUND_Y - 8 - rise, 14 + i * 2, 12);
+      ctx.fillStyle = `rgba(255,255,255,${0.85 - i * 0.12})`;
+      ctx.fillRect(screenX + 1 + (i % 2) * 4, GROUND_Y - 8 - rise, 16 + i * 2, 14);
     }
   }
 }
@@ -428,12 +434,14 @@ export class Dumpster {
       ctx.restore();
       return;
     }
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(screenX - 1, this.y - 1, this.width + 2, this.height + 2);
     ctx.fillStyle = '#2d6a4f';
     ctx.fillRect(screenX, this.y, this.width, this.height);
     ctx.fillStyle = '#1b4332';
     ctx.fillRect(screenX + 3, this.y + 6, 8, 10);
     ctx.fillRect(screenX + 19, this.y + 6, 8, 10);
-    ctx.fillStyle = '#40916c';
+    ctx.fillStyle = '#7dce82';
     if (this.open) {
       ctx.fillRect(screenX - 2, this.y - 18, this.width + 4, 8);
     } else {
@@ -526,7 +534,9 @@ export class Traffic {
   render(ctx, camera) {
     if (!this.on) return;
     const screenX = this.x - camera.x;
-    ctx.fillStyle = '#e63946';
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(screenX - 1, this.y - 1, this.width + 2, this.height + 2);
+    ctx.fillStyle = '#ff3b4a';
     ctx.fillRect(screenX, this.y, this.width, this.height);
     ctx.fillStyle = '#8ecae6';
     ctx.fillRect(screenX + 18, this.y + 3, 8, 6);
