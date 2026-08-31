@@ -21,7 +21,7 @@ const HUD_HEARTS = { x: 8, y: 6, width: 86, height: 28 };
 
 const RESTART_BUTTON = { x: GAME_WIDTH / 2 - 90, y: 160, width: 180, height: 40 };
 const MUTE_BUTTON = { x: GAME_WIDTH - 34, y: 8, width: 26, height: 22 };
-const LEVEL_START_BUTTON = { x: GAME_WIDTH / 2 - 70, y: GAME_HEIGHT / 2 + 40, width: 140, height: 36 };
+const LEVEL_START_BUTTON = { x: GAME_WIDTH / 2 - 70, y: 214, width: 140, height: 36 };
 const WARP_START_BUTTON = { x: GAME_WIDTH / 2 - 70, y: 214, width: 140, height: 36 };
 const WARP_LIST = { x: 24, y: 36, width: GAME_WIDTH - 48, rowH: 22, rows: 6 };
 // Longer than the intro so the clear fanfare gets to finish before the next
@@ -600,17 +600,20 @@ export class Game {
     if (this.state === STATE.INTRO) {
       if (isWarp()) {
         renderWarpPanel(ctx, this, this.introHover);
-      } else if (level.cityGate) {
-        renderCard(ctx, 'THE CITY', level.name, level.skill || '', { button: 'START', hover: this.introHover });
       } else {
-        renderCard(ctx, level.name, level.skill || level.subtitle, '', { button: 'START', hover: this.introHover });
+        renderIntro(ctx, level, this.introHover);
       }
     }
     if (this.state === STATE.LEVEL_CLEAR) {
       renderCard(ctx, 'LEVEL CLEAR!', level.name, '+1 heart');
     }
     if (this.state === STATE.WIN) {
-      renderEndScreen(ctx, allEggsFound() ? 'EGG HUNTER!' : 'YOU WIN!', '#2a9d3f');
+      renderEndScreen(
+        ctx,
+        allEggsFound() ? 'EGG HUNTER!' : 'YOU WIN!',
+        '#2a9d3f',
+        'Scoot rings the new bell all the way home.',
+      );
     }
     if (this.state === STATE.GAMEOVER) renderEndScreen(ctx, 'GAME OVER', '#e63946');
 
@@ -709,7 +712,48 @@ function renderWarpPanel(ctx, game, startHover) {
   ctx.textAlign = 'left';
 }
 
-/** Centered banner used for both the level intro and the clear screen. */
+function renderIntro(ctx, level, hover) {
+  ctx.fillStyle = 'rgba(0,0,0,0.64)';
+  ctx.fillRect(0, 32, GAME_WIDTH, GAME_HEIGHT - 32);
+
+  ctx.textAlign = 'center';
+  let y = 54;
+  if (level.cityGate) {
+    ctx.fillStyle = '#ff79c6';
+    ctx.font = "8px 'Press Start 2P', monospace";
+    ctx.fillText('THE CITY', GAME_WIDTH / 2, y);
+    y += 16;
+  }
+
+  ctx.fillStyle = '#ffd23f';
+  ctx.font = "12px 'Press Start 2P', monospace";
+  ctx.fillText(level.name, GAME_WIDTH / 2, y);
+  y += 20;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = "8px 'Press Start 2P', monospace";
+  y = wrapText(ctx, level.story || level.subtitle || '', GAME_WIDTH / 2, y, GAME_WIDTH - 32, 14);
+
+  const hint = level.skill || level.subtitle || '';
+  if (hint) {
+    y += 8;
+    ctx.fillStyle = '#cdeeff';
+    wrapText(ctx, hint, GAME_WIDTH / 2, y, GAME_WIDTH - 32, 12);
+  }
+
+  const b = LEVEL_START_BUTTON;
+  ctx.fillStyle = hover ? '#ffe873' : '#ffd23f';
+  ctx.fillRect(b.x, b.y, b.width, b.height);
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(b.x, b.y, b.width, b.height);
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = "14px 'Press Start 2P', monospace";
+  ctx.fillText('START', GAME_WIDTH / 2, b.y + 24);
+  ctx.textAlign = 'left';
+}
+
+/** Compact banner for the clear screen. */
 function renderCard(ctx, heading, name, note, opts = {}) {
   const tall = !!opts.button;
   ctx.fillStyle = 'rgba(0,0,0,0.55)';
@@ -743,7 +787,7 @@ function renderCard(ctx, heading, name, note, opts = {}) {
 }
 
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-  if (!text) return;
+  if (!text) return y;
   const words = text.split(' ');
   let line = '';
   let yy = y;
@@ -757,7 +801,11 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
       line = test;
     }
   }
-  if (line) ctx.fillText(line, x, yy);
+  if (line) {
+    ctx.fillText(line, x, yy);
+    yy += lineHeight;
+  }
+  return yy;
 }
 
 function drawMuteButton(ctx, muted) {
@@ -809,14 +857,20 @@ function drawHeart(ctx, x, y, filled, gold = false) {
   ctx.fill();
 }
 
-function renderEndScreen(ctx, message, color) {
+function renderEndScreen(ctx, message, color, note = '') {
   ctx.fillStyle = 'rgba(0,0,0,0.55)';
   ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
   ctx.textAlign = 'center';
   ctx.font = "bold 24px 'Press Start 2P', monospace";
   ctx.fillStyle = color;
-  ctx.fillText(message, GAME_WIDTH / 2, 110);
+  ctx.fillText(message, GAME_WIDTH / 2, 96);
+
+  if (note) {
+    ctx.fillStyle = '#ffffff';
+    ctx.font = "8px 'Press Start 2P', monospace";
+    wrapText(ctx, note, GAME_WIDTH / 2, 124, GAME_WIDTH - 40, 14);
+  }
 
   const b = RESTART_BUTTON;
   ctx.fillStyle = '#ffd23f';

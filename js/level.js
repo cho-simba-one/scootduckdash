@@ -135,6 +135,7 @@ export function createLevel(index = 0) {
     name: data.name,
     subtitle: data.subtitle,
     skill: data.skill || '',
+    story: data.story || '',
     theme: data.theme,
     world: data.world || 'farm',
     cityGate: !!data.cityGate,
