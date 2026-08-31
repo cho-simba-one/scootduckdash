@@ -424,10 +424,112 @@ const SCOOT = {
   drone: { note: 'C2', type: 'sine', gain: 0.1 }, clicks: [0, 3, 8, 11, 14],
 };
 
+const DOCK = {
+  name: 'Loading Dock', bpm: 92, loopSteps: 16,
+  bass: { type: 'square', gain: 0.09, length: 1.5,
+    pattern: ['G2', null, 'G2', null, 'Bb2', null, 'G2', null,
+              'F2', null, 'F2', null, 'Ab2', null, 'F2', null] },
+  lead: { type: 'triangle', gain: 0.045, length: 1.1,
+    pattern: [null, null, 'G4', null, null, 'Bb4', null, null,
+              null, 'F4', null, null, 'D4', null, 'G4', null] },
+  drone: { note: 'G2', type: 'sine', gain: 0.09 }, clicks: [0, 6, 10, 14],
+};
+const CATWALK = {
+  name: 'Catwalk West', bpm: 100, loopSteps: 16,
+  bass: { type: 'triangle', gain: 0.10, length: 1.2,
+    pattern: ['D3', null, 'A3', null, 'C3', null, 'G3', null,
+              'Bb2', null, 'F3', null, 'A2', null, 'E3', null] },
+  lead: { type: 'sawtooth', gain: 0.04, length: 1.3,
+    pattern: [null, 'D5', null, null, 'A4', null, 'C5', null,
+              null, 'Bb4', null, null, 'F4', null, 'A4', null] },
+  drone: { note: 'D2', type: 'triangle', gain: 0.08 }, clicks: [0, 4, 8, 12],
+};
+const HOPPER = {
+  name: 'Hopper House', bpm: 108, loopSteps: 16,
+  bass: { type: 'square', gain: 0.09, length: 0.85,
+    pattern: ['E2', 'E3', null, 'E2', 'G2', 'E3', null, 'B2',
+              'D2', 'D3', null, 'D2', 'F2', 'D3', null, 'A2'] },
+  lead: { type: 'square', gain: 0.04, length: 0.5,
+    pattern: ['B4', null, 'E5', null, 'G4', null, 'B4', null,
+              'A4', null, 'D5', null, 'F4', null, 'A4', null] },
+  drone: { note: 'E2', type: 'sine', gain: 0.08 }, clicks: [0, 3, 8, 11],
+};
+const DEADEND = {
+  name: 'Dead End East', bpm: 88, loopSteps: 16,
+  bass: { type: 'sine', gain: 0.12, length: 2.0,
+    pattern: ['A2', null, null, 'E3', null, null, 'A2', null,
+              'G2', null, null, 'D3', null, null, 'C3', null] },
+  lead: { type: 'triangle', gain: 0.04, length: 1.6,
+    pattern: [null, null, 'A4', null, null, null, 'E4', null,
+              null, 'G4', null, null, 'D4', null, 'C4', null] },
+  drone: { note: 'A1', type: 'sine', gain: 0.1 }, clicks: [0, 7, 13],
+};
+const SHAFT = {
+  name: 'Elevator Shaft', bpm: 96, loopSteps: 16,
+  bass: { type: 'triangle', gain: 0.10, length: 1.4,
+    pattern: ['C3', null, null, 'G3', 'C3', null, 'Eb3', null,
+              'Bb2', null, null, 'F3', 'Bb2', null, 'D3', null] },
+  lead: { type: 'square', gain: 0.04, length: 0.8,
+    pattern: [null, 'C5', null, 'G4', null, 'Eb5', null, null,
+              null, 'Bb4', null, 'F4', null, 'D5', null, null] },
+  drone: { note: 'C2', type: 'triangle', gain: 0.09 }, clicks: [0, 5, 8, 13],
+};
+const WING = {
+  name: 'West Wing', bpm: 102, loopSteps: 16,
+  bass: { type: 'triangle', gain: 0.09, length: 1.3,
+    pattern: ['F3', null, 'C4', null, 'Eb3', null, 'Bb3', null,
+              'G3', null, 'D4', null, 'F3', null, 'C4', null] },
+  lead: { type: 'sawtooth', gain: 0.035, length: 1.5,
+    pattern: ['F4', null, null, 'A4', null, 'C5', null, null,
+              'G4', null, null, 'Bb4', null, 'D5', null, null] },
+  drone: { note: 'F2', type: 'sine', gain: 0.08 }, clicks: [0, 6, 10],
+};
+const GEAR = {
+  name: 'Gear Loft', bpm: 118, loopSteps: 16,
+  bass: { type: 'square', gain: 0.09, length: 0.7,
+    pattern: ['G2', 'D3', 'G2', 'Bb2', 'G2', 'D3', 'F2', 'C3',
+              'G2', 'D3', 'G2', 'Bb2', 'G2', 'D3', 'Eb2', 'Bb2'] },
+  lead: { type: 'sawtooth', gain: 0.04, length: 0.45,
+    pattern: ['G4', 'Bb4', null, 'D5', null, 'Bb4', 'G4', null,
+              'F4', 'Ab4', null, 'C5', null, 'Ab4', 'F4', null] },
+  drone: { note: 'G2', type: 'triangle', gain: 0.08 }, clicks: [0, 2, 4, 8, 10, 12],
+};
+const SHIFT = {
+  name: 'Night Shift', bpm: 80, loopSteps: 16,
+  bass: { type: 'sine', gain: 0.13, length: 2.2,
+    pattern: ['E2', null, null, null, 'B2', null, null, null,
+              'D2', null, null, null, 'A2', null, 'G2', null] },
+  lead: { type: 'triangle', gain: 0.04, length: 1.8,
+    pattern: [null, null, null, 'E4', null, null, 'B4', null,
+              null, null, 'D4', null, null, 'A4', null, null] },
+  drone: { note: 'E2', type: 'sine', gain: 0.11 }, clicks: [0, 9, 14],
+};
+const DUST = {
+  name: 'Dust Storm', bpm: 124, loopSteps: 16,
+  bass: { type: 'sawtooth', gain: 0.08, length: 0.75,
+    pattern: ['A2', 'E3', 'A2', 'C3', 'A2', 'E3', 'G2', 'D3',
+              'A2', 'E3', 'A2', 'C3', 'A2', 'E3', 'Bb2', 'F3'] },
+  lead: { type: 'square', gain: 0.04, length: 0.5,
+    pattern: ['A4', null, 'E5', null, 'C5', null, 'A4', null,
+              'G4', null, 'D5', null, 'Bb4', null, 'G4', null] },
+  drone: { note: 'A2', type: 'sine', gain: 0.09 }, clicks: [0, 3, 6, 8, 11, 14],
+};
+const PIE = {
+  name: 'Pie Safe', bpm: 120, loopSteps: 16,
+  bass: { type: 'square', gain: 0.09, length: 0.9,
+    pattern: ['C3', null, 'G3', 'Bb2', null, 'F3', 'Ab2', null,
+              'C3', null, 'G3', 'Eb3', null, 'Bb2', 'F3', null] },
+  lead: { type: 'triangle', gain: 0.05, length: 0.7,
+    pattern: ['G5', null, 'Eb5', null, 'C5', null, 'Bb4', null,
+              'Ab4', null, 'C5', null, 'Eb5', null, 'G5', null] },
+  drone: { note: 'C2', type: 'sine', gain: 0.1 }, clicks: [0, 3, 8, 11, 14],
+};
+
 export const TRACKS = [
   FARMYARD, ORCHARD, MIDNIGHT, DAWN, STORM, PIGPEN, MEADOW, MOLES, GALE, FAIR,
   CURB, SQUARE, RUSH, STEAM, BELT, SCAFF, MARKET, OVER, HAT, NEON,
   GIZA, SPHINX, NILE, RIM, SWITCH, PARIS, WALLT, RIO, HARBOR, SCOOT,
+  DOCK, CATWALK, HOPPER, DEADEND, SHAFT, WING, GEAR, SHIFT, DUST, PIE,
 ];
 
 /** Track for a level index, clamped so extra levels reuse the last one. */

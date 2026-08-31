@@ -13,7 +13,7 @@ function fadeKill(self, ctx, camera, sprite, flip) {
   const screenX = self.x - camera.x;
   ctx.save();
   ctx.globalAlpha = t;
-  ctx.translate(screenX + self.width / 2, self.y + self.height);
+  ctx.translate(screenX + self.width / 2, self.y - camera.y + self.height);
   ctx.scale(1, t);
   drawSprite(ctx, sprite, -self.width / 2, -self.height, { flip });
   ctx.restore();
@@ -21,13 +21,13 @@ function fadeKill(self, ctx, camera, sprite, flip) {
 
 /** Low pink tank. Walks, then charges if you're in front. Jump over it. */
 export class Pig {
-  constructor(x) {
+  constructor(x, floorY = GROUND_Y) {
     const size = spriteSize(PIG);
     this.width = size.width;
     this.height = size.height;
     this.originX = x;
     this.x = x;
-    this.y = GROUND_Y - this.height;
+    this.y = floorY - this.height;
     this.dir = 1;
     this.state = 'walk'; // walk | charge | dying
     this.chargeUntil = 0;
@@ -76,7 +76,7 @@ export class Pig {
 
   render(ctx, camera) {
     if (this.state === 'dying') return fadeKill(this, ctx, camera, PIG, this.dir < 0);
-    drawSprite(ctx, PIG, this.x - camera.x, this.y, { flip: this.dir < 0 });
+    drawSprite(ctx, PIG, this.x - camera.x, this.y - camera.y, { flip: this.dir < 0 });
   }
 }
 
@@ -127,7 +127,7 @@ export class Bee {
 
   render(ctx, camera) {
     if (this.state === 'dying') return fadeKill(this, ctx, camera, BEE, this.dir < 0);
-    drawSprite(ctx, BEE, this.x - camera.x, this.y, { scale: 2, flip: this.dir < 0 });
+    drawSprite(ctx, BEE, this.x - camera.x, this.y - camera.y, { scale: 2, flip: this.dir < 0 });
   }
 }
 
@@ -178,10 +178,10 @@ export class Mole {
     const screenX = this.x - camera.x;
     ctx.fillStyle = '#1a1a1a';
     ctx.beginPath();
-    ctx.ellipse(screenX + this.width / 2, GROUND_Y, this.width / 2, 5, 0, 0, Math.PI * 2);
+    ctx.ellipse(screenX + this.width / 2, GROUND_Y - camera.y, this.width / 2, 5, 0, 0, Math.PI * 2);
     ctx.fill();
     if (this.state === 'dying') return fadeKill(this, ctx, camera, MOLE, false);
-    if (this.up) drawSprite(ctx, MOLE, screenX, this.y);
+    if (this.up) drawSprite(ctx, MOLE, screenX, this.y - camera.y);
   }
 }
 
@@ -233,7 +233,7 @@ export class Crow {
 
   render(ctx, camera) {
     if (this.state === 'dying') return fadeKill(this, ctx, camera, CROW, false);
-    drawSprite(ctx, CROW, this.x - camera.x, this.y, { scale: 2 });
+    drawSprite(ctx, CROW, this.x - camera.x, this.y - camera.y, { scale: 2 });
   }
 }
 
@@ -265,9 +265,9 @@ export class BouncePad {
   render(ctx, camera) {
     const squish = 1 - this.squash * 0.35;
     ctx.save();
-    ctx.translate(this.x - camera.x + this.width / 2, this.y + this.height);
+    ctx.translate(this.x - camera.x + this.width / 2, this.y - camera.y + this.height);
     ctx.scale(1 + this.squash * 0.2, squish);
-    if (this.world === 'city' || this.world === 'travel') {
+    if (this.world === 'city' || this.world === 'travel' || this.world === 'mill') {
       ctx.fillStyle = '#111111';
       ctx.fillRect(-this.width / 2 - 1, -11, this.width + 2, 12);
       ctx.fillStyle = '#ffd23f';

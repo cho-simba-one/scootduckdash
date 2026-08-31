@@ -56,14 +56,15 @@ export class Pickup {
 
   render(ctx, camera) {
     const screenX = this.x - camera.x;
+    const screenY = this.y - camera.y;
     if (this.collected) {
       // Float up and fade out -- confirms the pickup registered.
       const t = Math.max(0, this.fade / COLLECT_FADE_MS);
-      drawSprite(ctx, this.grid, screenX, this.y - (1 - t) * 24, {
+      drawSprite(ctx, this.grid, screenX, screenY - (1 - t) * 24, {
         scale: 3, alpha: t,
       });
       return;
     }
-    drawSprite(ctx, this.grid, screenX, this.y, { scale: 3 });
+    drawSprite(ctx, this.grid, screenX, screenY, { scale: 3 });
   }
 }

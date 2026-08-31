@@ -13,7 +13,7 @@ function fadeKill(self, ctx, camera, sprite, flip, scale = 3) {
   const screenX = self.x - camera.x;
   ctx.save();
   ctx.globalAlpha = t;
-  ctx.translate(screenX + self.width / 2, self.y + self.height);
+  ctx.translate(screenX + self.width / 2, self.y - camera.y + self.height);
   ctx.scale(1, t);
   drawSprite(ctx, sprite, -self.width / 2, -self.height, { flip, scale });
   ctx.restore();
@@ -21,13 +21,13 @@ function fadeKill(self, ctx, camera, sprite, flip, scale = 3) {
 
 /** Fast ground scurrier. Jump it -- it's too low to duck "through". */
 export class Rat {
-  constructor(x) {
+  constructor(x, floorY = GROUND_Y) {
     const size = spriteSize(RAT, 2);
     this.width = size.width;
     this.height = size.height;
     this.originX = x;
     this.x = x;
-    this.y = GROUND_Y - this.height;
+    this.y = floorY - this.height;
     this.dir = 1;
     this.state = 'run';
     this.dead = false;
@@ -61,7 +61,7 @@ export class Rat {
 
   render(ctx, camera) {
     if (this.state === 'dying') return fadeKill(this, ctx, camera, RAT, this.dir < 0, 2);
-    drawSprite(ctx, RAT, this.x - camera.x, this.y, { scale: 2, flip: this.dir < 0 });
+    drawSprite(ctx, RAT, this.x - camera.x, this.y - camera.y, { scale: 2, flip: this.dir < 0 });
   }
 }
 
@@ -112,7 +112,7 @@ export class Pigeon {
 
   render(ctx, camera) {
     if (this.state === 'dying') return fadeKill(this, ctx, camera, PIGEON, this.dir < 0, 2);
-    drawSprite(ctx, PIGEON, this.x - camera.x, this.y, { scale: 2, flip: this.dir < 0 });
+    drawSprite(ctx, PIGEON, this.x - camera.x, this.y - camera.y, { scale: 2, flip: this.dir < 0 });
   }
 }
 
@@ -164,11 +164,11 @@ export class Taxi {
 
   render(ctx, camera) {
     const screenX = this.solid.x - camera.x;
-    drawSprite(ctx, TAXI, screenX, this.solid.y - 10, { scale: 2 });
+    drawSprite(ctx, TAXI, screenX, this.solid.y - 10 - camera.y, { scale: 2 });
     ctx.fillStyle = '#111111';
-    ctx.fillRect(screenX - 1, this.solid.y - 2, this.width + 2, 5);
+    ctx.fillRect(screenX - 1, this.solid.y - 2 - camera.y, this.width + 2, 5);
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(screenX + 4, this.solid.y - 1, this.width - 8, 3);
+    ctx.fillRect(screenX + 4, this.solid.y - 1 - camera.y, this.width - 8, 3);
   }
 }
 
@@ -204,19 +204,19 @@ export class Hydrant {
   render(ctx, camera) {
     const screenX = this.x - camera.x;
     ctx.fillStyle = '#c0392b';
-    ctx.fillRect(screenX, GROUND_Y - 18, 14, 18);
+    ctx.fillRect(screenX, GROUND_Y - 18 - camera.y, 14, 18);
     ctx.fillStyle = '#f1c40f';
-    ctx.fillRect(screenX + 4, GROUND_Y - 22, 6, 6);
+    ctx.fillRect(screenX + 4, GROUND_Y - 22 - camera.y, 6, 6);
     const jet = this.getHitbox();
     if (!jet) return;
     ctx.fillStyle = '#111111';
-    ctx.fillRect(jet.x - camera.x - 1, jet.y - 1, jet.width + 2, jet.height + 2);
+    ctx.fillRect(jet.x - camera.x - 1, jet.y - 1 - camera.y, jet.width + 2, jet.height + 2);
     ctx.fillStyle = '#5ad0ff';
-    ctx.fillRect(jet.x - camera.x, jet.y, jet.width, jet.height);
+    ctx.fillRect(jet.x - camera.x, jet.y - camera.y, jet.width, jet.height);
     ctx.fillStyle = '#ffffff';
     for (let i = 0; i < 5; i++) {
       const drop = (this.t / 40 + i * 17) % jet.width;
-      ctx.fillRect(jet.x - camera.x + drop, jet.y + (i % 3) * 4, 4, 3);
+      ctx.fillRect(jet.x - camera.x + drop, jet.y - camera.y + (i % 3) * 4, 4, 3);
     }
   }
 }
@@ -249,16 +249,16 @@ export class Geyser {
   render(ctx, camera) {
     const screenX = this.x - camera.x;
     ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(screenX - 2, GROUND_Y - 4, 26, 6);
+    ctx.fillRect(screenX - 2, GROUND_Y - 4 - camera.y, 26, 6);
     ctx.fillStyle = '#4a4a52';
-    ctx.fillRect(screenX + 2, GROUND_Y - 3, 6, 4);
-    ctx.fillRect(screenX + 14, GROUND_Y - 3, 6, 4);
+    ctx.fillRect(screenX + 2, GROUND_Y - 3 - camera.y, 6, 4);
+    ctx.fillRect(screenX + 14, GROUND_Y - 3 - camera.y, 6, 4);
     if (!this.on) return;
     const puff = ((this.t / 80) % 10);
     for (let i = 0; i < 4; i++) {
       const rise = (puff + i * 14) % 64;
       ctx.fillStyle = `rgba(255,255,255,${0.85 - i * 0.12})`;
-      ctx.fillRect(screenX + 1 + (i % 2) * 4, GROUND_Y - 8 - rise, 16 + i * 2, 14);
+      ctx.fillRect(screenX + 1 + (i % 2) * 4, GROUND_Y - 8 - rise - camera.y, 16 + i * 2, 14);
     }
   }
 }
@@ -324,7 +324,7 @@ export class Cat {
 
   render(ctx, camera) {
     if (this.state === 'dying') return fadeKill(this, ctx, camera, CAT, this.dir < 0, 3);
-    drawSprite(ctx, CAT, this.x - camera.x, this.y, { scale: 3, flip: this.dir < 0 });
+    drawSprite(ctx, CAT, this.x - camera.x, this.y - camera.y, { scale: 3, flip: this.dir < 0 });
   }
 }
 
@@ -379,9 +379,9 @@ export class Drone {
     const screenX = this.x - camera.x;
     const spin = Math.sin(this.t / 40);
     ctx.fillStyle = '#8d99ae';
-    ctx.fillRect(screenX - 4 + spin * 6, this.y - 3, 10, 2);
-    ctx.fillRect(screenX + this.width - 6 - spin * 6, this.y - 3, 10, 2);
-    drawSprite(ctx, DRONE, screenX, this.y, { scale: 2 });
+    ctx.fillRect(screenX - 4 + spin * 6, this.y - 3 - camera.y, 10, 2);
+    ctx.fillRect(screenX + this.width - 6 - spin * 6, this.y - 3 - camera.y, 10, 2);
+    drawSprite(ctx, DRONE, screenX, this.y - camera.y, { scale: 2 });
   }
 }
 
@@ -430,22 +430,22 @@ export class Dumpster {
       ctx.save();
       ctx.globalAlpha = t;
       ctx.fillStyle = '#2d6a4f';
-      ctx.fillRect(screenX, this.y + (1 - t) * 16, this.width, this.height * t);
+      ctx.fillRect(screenX, this.y + (1 - t) * 16 - camera.y, this.width, this.height * t);
       ctx.restore();
       return;
     }
     ctx.fillStyle = '#111111';
-    ctx.fillRect(screenX - 1, this.y - 1, this.width + 2, this.height + 2);
+    ctx.fillRect(screenX - 1, this.y - 1 - camera.y, this.width + 2, this.height + 2);
     ctx.fillStyle = '#2d6a4f';
-    ctx.fillRect(screenX, this.y, this.width, this.height);
+    ctx.fillRect(screenX, this.y - camera.y, this.width, this.height);
     ctx.fillStyle = '#1b4332';
-    ctx.fillRect(screenX + 3, this.y + 6, 8, 10);
-    ctx.fillRect(screenX + 19, this.y + 6, 8, 10);
+    ctx.fillRect(screenX + 3, this.y + 6 - camera.y, 8, 10);
+    ctx.fillRect(screenX + 19, this.y + 6 - camera.y, 8, 10);
     ctx.fillStyle = '#7dce82';
     if (this.open) {
-      ctx.fillRect(screenX - 2, this.y - 18, this.width + 4, 8);
+      ctx.fillRect(screenX - 2, this.y - 18 - camera.y, this.width + 4, 8);
     } else {
-      ctx.fillRect(screenX - 1, this.y - 4, this.width + 2, 6);
+      ctx.fillRect(screenX - 1, this.y - 4 - camera.y, this.width + 2, 6);
     }
   }
 }
@@ -490,13 +490,13 @@ export class Crane {
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(screenX + this.width / 2, 0);
-    ctx.lineTo(screenX + this.width / 2, y);
+    ctx.lineTo(screenX + this.width / 2, y - camera.y);
     ctx.stroke();
     ctx.fillStyle = '#f1c40f';
-    ctx.fillRect(screenX, y, this.width, this.height);
+    ctx.fillRect(screenX, y - camera.y, this.width, this.height);
     ctx.fillStyle = '#1a1a1a';
     for (let i = 0; i < this.width; i += 10) {
-      ctx.fillRect(screenX + i, y, 5, this.height);
+      ctx.fillRect(screenX + i, y - camera.y, 5, this.height);
     }
   }
 }
@@ -535,15 +535,15 @@ export class Traffic {
     if (!this.on) return;
     const screenX = this.x - camera.x;
     ctx.fillStyle = '#111111';
-    ctx.fillRect(screenX - 1, this.y - 1, this.width + 2, this.height + 2);
+    ctx.fillRect(screenX - 1, this.y - 1 - camera.y, this.width + 2, this.height + 2);
     ctx.fillStyle = '#ff3b4a';
-    ctx.fillRect(screenX, this.y, this.width, this.height);
+    ctx.fillRect(screenX, this.y - camera.y, this.width, this.height);
     ctx.fillStyle = '#8ecae6';
-    ctx.fillRect(screenX + 18, this.y + 3, 8, 6);
+    ctx.fillRect(screenX + 18, this.y + 3 - camera.y, 8, 6);
     ctx.fillStyle = '#f1c40f';
-    ctx.fillRect(screenX + this.width - 4, this.y + 5, 3, 3);
+    ctx.fillRect(screenX + this.width - 4, this.y + 5 - camera.y, 3, 3);
     ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(screenX + 4, this.y + 12, 6, 3);
-    ctx.fillRect(screenX + 20, this.y + 12, 6, 3);
+    ctx.fillRect(screenX + 4, this.y + 12 - camera.y, 6, 3);
+    ctx.fillRect(screenX + 20, this.y + 12 - camera.y, 6, 3);
   }
 }

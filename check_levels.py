@@ -56,17 +56,25 @@ def parse_levels(text: str) -> list[dict]:
         nxt = body.find("name:", chunk_start + 5)
         chunk = body[chunk_start : nxt if nxt > 0 else None]
         width = re.search(r"width:\s*(\d+)", chunk)
+        world = re.search(r"world:\s*'([^']+)'", chunk)
+        spawn = _js_array(chunk, "spawn")
+        goal = _js_array(chunk, "goal")
+        mill = (world.group(1) if world else "") == "mill"
         levels.append({
             "name": m.group(1),
             "width": int(width.group(1)) if width else 0,
             "ground": _js_array(chunk, "ground") or [],
+            "ledges": _js_array(chunk, "ledges") or [],
             "hay": _js_array(chunk, "hay") or [],
             "ponds": _js_array(chunk, "ponds") or [],
             "lilies": _js_array(chunk, "lilies") or [],
             "carts": _js_array(chunk, "carts") or [],
             "taxis": _js_array(chunk, "taxis") or [],
             "pickups": _js_array(chunk, "pickups") or [],
-            "whip": bool(re.search(r"whip:\s*true", chunk)),
+            "spawn": spawn,
+            "goal": goal,
+            "mill": mill,
+            "whip": bool(re.search(r"whip:\s*true", chunk)) or mill,
         })
     return levels
 
@@ -79,16 +87,37 @@ def edge_limit(lv):
     return WHIP_SAFE if lv.get("whip") else SAFE_EDGE
 
 
+def on_ground(x, lv):
+    for gx, gw, *_rest in lv["ground"]:
+        if gx <= x <= gx + gw:
+            return True
+    return False
+
+
+def on_ledge(x, goal_y, lv):
+    for row in lv["ledges"]:
+        lx, lw, ly, *_rest = row
+        if lx <= x <= lx + lw and abs(goal_y - (ly - 90)) < 8:
+            return True
+    return False
+
+
 def check_level(lv: dict) -> list[str]:
     fails = []
     name = lv["name"]
 
-    if lv["ground"][0][0] > 40:
-        fails.append(f"{name}: spawn x=40 is not on the first ground strip")
-    last_g = lv["ground"][-1]
-    goal_x = lv["width"] - 120
-    if not (last_g[0] <= goal_x <= last_g[0] + last_g[1]):
-        fails.append(f"{name}: goal at {goal_x} is not on the last ground strip")
+    spawn_x = lv["spawn"][0] if lv["spawn"] else 40
+    if not on_ground(spawn_x, lv):
+        fails.append(f"{name}: spawn x={spawn_x} is not on a ground strip")
+    if lv["goal"]:
+        gx, gy = lv["goal"]
+        if not on_ground(gx, lv) and not on_ledge(gx, gy, lv):
+            fails.append(f"{name}: goal at {gx},{gy} is not on ground or a ledge")
+    else:
+        last_g = lv["ground"][-1]
+        goal_x = lv["width"] - 120
+        if not (last_g[0] <= goal_x <= last_g[0] + last_g[1]):
+            fails.append(f"{name}: goal at {goal_x} is not on the last ground strip")
 
     for pond in lv["ponds"]:
         pads = sorted(cx for cx, _y in lv["lilies"] if pond[0] < cx < pond[1])
@@ -190,8 +219,8 @@ def check_pond(name, a, b, lv) -> list[str]:
 
 def main():
     levels = parse_levels(LEVELS_JS.read_text(encoding="utf-8"))
-    if len(levels) < 30:
-        raise SystemExit(f"expected at least 30 levels, parsed {len(levels)}")
+    if len(levels) < 40:
+        raise SystemExit(f"expected at least 40 levels, parsed {len(levels)}")
     fails = []
     for lv in levels:
         fails.extend(check_level(lv))

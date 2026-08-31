@@ -72,13 +72,13 @@ export class Goose {
       const t = Math.max(0, this.deathTimer / DEATH_FADE_MS);
       ctx.save();
       ctx.globalAlpha = t;
-      ctx.translate(screenX + this.width / 2, this.y + this.height);
+      ctx.translate(screenX + this.width / 2, this.y - camera.y + this.height);
       ctx.scale(1, t);
       drawSprite(ctx, GOOSE, -this.width / 2, -this.height, { scale: 2, flip: this.dir < 0 });
       ctx.restore();
       return;
     }
-    drawSprite(ctx, GOOSE, screenX, this.y, { scale: 2, flip: this.dir < 0 });
+    drawSprite(ctx, GOOSE, screenX, this.y - camera.y, { scale: 2, flip: this.dir < 0 });
   }
 }
 
@@ -136,10 +136,11 @@ export class Cart {
 
   render(ctx, camera) {
     const screenX = this.solid.x - camera.x;
-    const y = this.solid.y;
+    const y = this.solid.y - camera.y;
     const w = this.width;
-    if (this.world === 'city' || this.world === 'travel') {
-      const top = this.world === 'travel' ? '#e8c36a' : '#ffd23f';
+    if (this.world === 'city' || this.world === 'travel' || this.world === 'mill') {
+      const top = this.world === 'travel' ? '#e8c36a'
+        : this.world === 'mill' ? '#c48a3a' : '#ffd23f';
       ctx.fillStyle = '#111111';
       ctx.fillRect(screenX - 1, y - 1, w + 2, 12);
       ctx.fillStyle = top;

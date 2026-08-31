@@ -14,6 +14,10 @@ function parallaxX(worldX, camera, factor) {
   return worldX - camera.x * factor;
 }
 
+function parallaxY(worldY, camera, factor) {
+  return worldY - camera.y * factor;
+}
+
 /** Sky, sun/moon and (at night) stars, tinted by the level's theme. */
 export function renderSky(ctx, theme = THEMES.day) {
   const gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
@@ -48,18 +52,20 @@ export function renderBackground(ctx, camera, level, nowMs) {
     renderCitySkyline(ctx, camera, level, nowMs);
   } else if (level.world === 'travel') {
     renderTravelLandmarks(ctx, camera, level, nowMs);
+  } else if (level.world === 'mill') {
+    renderMillSkyline(ctx, camera, level, nowMs);
   } else {
     for (const cloud of level.clouds) {
-      drawSprite(ctx, CLOUD, parallaxX(cloud.x, camera, 0.2), cloud.y, { scale: 3 });
+      drawSprite(ctx, CLOUD, parallaxX(cloud.x, camera, 0.2), parallaxY(cloud.y, camera, 0.15), { scale: 3 });
     }
     for (const b of level.buildings) {
       const sprite = b.type === 'farmhouse' ? FARMHOUSE : BARN;
-      drawSprite(ctx, sprite, parallaxX(b.x, camera, 0.5), b.y, { scale: 2 });
+      drawSprite(ctx, sprite, parallaxX(b.x, camera, 0.5), parallaxY(b.y, camera, 0.35), { scale: 2 });
     }
     for (const a of level.animals) {
       const bob = Math.sin(nowMs / 400 + a.seed * 10) * 2;
       const sprite = a.type === 'dog' ? DOG : GOOSE;
-      drawSprite(ctx, sprite, parallaxX(a.x, camera, 0.75), a.y + bob, { scale: 2.5 });
+      drawSprite(ctx, sprite, parallaxX(a.x, camera, 0.75), parallaxY(a.y + bob, camera, 0.55), { scale: 2.5 });
     }
   }
 
@@ -67,30 +73,36 @@ export function renderBackground(ctx, camera, level, nowMs) {
   for (const pond of level.ponds) {
     const screenX = parallaxX(pond.x, camera, 1);
     if (screenX + pond.width < 0 || screenX > GAME_WIDTH) continue;
-    const grad = ctx.createLinearGradient(0, GROUND_Y, 0, GAME_HEIGHT);
+    const gy = GROUND_Y - camera.y;
+    if (gy >= GAME_HEIGHT) continue;
+    const gh = GAME_HEIGHT - gy;
+    const grad = ctx.createLinearGradient(0, gy, 0, GAME_HEIGHT);
     grad.addColorStop(0, waterTop);
     grad.addColorStop(1, waterBottom);
     ctx.fillStyle = grad;
-    ctx.fillRect(screenX, GROUND_Y, pond.width, GAME_HEIGHT - GROUND_Y);
+    ctx.fillRect(screenX, gy, pond.width, gh);
     if (level.world === 'city') {
       ctx.fillStyle = '#111111';
-      ctx.fillRect(screenX, GROUND_Y, pond.width, 10);
-      fillCaution(ctx, screenX, GROUND_Y, 10, GAME_HEIGHT - GROUND_Y);
-      fillCaution(ctx, screenX + pond.width - 10, GROUND_Y, 10, GAME_HEIGHT - GROUND_Y);
+      ctx.fillRect(screenX, gy, pond.width, 10);
+      fillCaution(ctx, screenX, gy, 10, gh);
+      fillCaution(ctx, screenX + pond.width - 10, gy, 10, gh);
       ctx.fillStyle = '#ffd23f';
-      ctx.fillRect(screenX + 10, GROUND_Y, pond.width - 20, 4);
+      ctx.fillRect(screenX + 10, gy, pond.width - 20, 4);
       ctx.fillStyle = 'rgba(255,255,255,0.22)';
       const steam = (nowMs / 350 + pond.x) % 36;
-      ctx.fillRect(screenX + pond.width * 0.28, GROUND_Y - steam * 0.45, 7, steam * 0.45);
-      ctx.fillRect(screenX + pond.width * 0.62, GROUND_Y - steam * 0.3, 5, steam * 0.3);
+      ctx.fillRect(screenX + pond.width * 0.28, gy - steam * 0.45, 7, steam * 0.45);
+      ctx.fillRect(screenX + pond.width * 0.62, gy - steam * 0.3, 5, steam * 0.3);
     } else if (level.world === 'travel') {
-      fillSandstone(ctx, screenX, GROUND_Y, 8, GAME_HEIGHT - GROUND_Y);
-      fillSandstone(ctx, screenX + pond.width - 8, GROUND_Y, 8, GAME_HEIGHT - GROUND_Y);
+      fillSandstone(ctx, screenX, gy, 8, gh);
+      fillSandstone(ctx, screenX + pond.width - 8, gy, 8, gh);
+    } else if (level.world === 'mill') {
+      fillMillWood(ctx, screenX, gy, 8, gh);
+      fillMillWood(ctx, screenX + pond.width - 8, gy, 8, gh);
     } else {
       ctx.strokeStyle = 'rgba(255,255,255,0.5)';
       ctx.lineWidth = 2;
       for (let i = 0; i < 3; i++) {
-        const rippleY = GROUND_Y + 14 + i * 12 + Math.sin(nowMs / 500 + i) * 2;
+        const rippleY = gy + 14 + i * 12 + Math.sin(nowMs / 500 + i) * 2;
         ctx.beginPath();
         ctx.moveTo(screenX + 6, rippleY);
         ctx.lineTo(screenX + pond.width - 6, rippleY);
@@ -112,6 +124,89 @@ function fillSandstone(ctx, x, y, w, h) {
   ctx.fillRect(x, y, w, h);
   ctx.fillStyle = '#c48a3a';
   ctx.fillRect(x, y + Math.max(2, h - 3), w, Math.min(3, h));
+}
+
+function fillMillWood(ctx, x, y, w, h) {
+  ctx.fillStyle = '#111111';
+  ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+  ctx.fillStyle = '#8a6230';
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = '#c48a3a';
+  ctx.fillRect(x, y, w, Math.min(4, h));
+  ctx.fillStyle = '#5c3a18';
+  for (let d = 8; d < h - 4; d += 8) {
+    ctx.fillRect(x, y + d, w, 1);
+  }
+}
+
+function renderMillSkyline(ctx, camera, level, nowMs) {
+  const horizon = GROUND_Y - 86 - camera.y * 0.25;
+  const width = level.width;
+  // Far silos.
+  for (let i = 0; i < width / 280 + 2; i++) {
+    const x = parallaxX(40 + i * 280, camera, 0.35);
+    if (x < -50 || x > GAME_WIDTH + 50) continue;
+    const h = 70 + (i % 3) * 18;
+    ctx.fillStyle = '#6a4a28';
+    ctx.fillRect(x, horizon - h, 28, h);
+    ctx.fillStyle = '#c48a3a';
+    ctx.fillRect(x, horizon - h, 28, 6);
+    ctx.beginPath();
+    ctx.ellipse(x + 14, horizon - h, 14, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#3a2810';
+    ctx.fillRect(x + 11, horizon - h - 18, 6, 18);
+  }
+  // Mill house with loft window.
+  for (let i = 0; i < width / 520 + 1; i++) {
+    const x = parallaxX(160 + i * 520, camera, 0.5);
+    if (x < -90 || x > GAME_WIDTH + 90) continue;
+    ctx.fillStyle = '#5a3a1c';
+    ctx.fillRect(x, horizon - 62, 86, 62);
+    ctx.fillStyle = '#3a2410';
+    ctx.beginPath();
+    ctx.moveTo(x - 6, horizon - 62);
+    ctx.lineTo(x + 43, horizon - 92);
+    ctx.lineTo(x + 92, horizon - 62);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#ffe6a0';
+    ctx.fillRect(x + 12, horizon - 48, 14, 16);
+    ctx.fillRect(x + 58, horizon - 48, 14, 16);
+    ctx.fillStyle = '#ffd23f';
+    ctx.fillRect(x + 36, horizon - 78, 12, 12);
+  }
+  // Waterwheel.
+  const wheelX = parallaxX(Math.floor(camera.x * 0.45 / 640) * 640 + 420, camera, 0.45);
+  if (wheelX > -40 && wheelX < GAME_WIDTH + 40) {
+    const cx = wheelX + 18;
+    const cy = horizon - 8;
+    ctx.strokeStyle = '#3a2410';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(nowMs / 700);
+    ctx.strokeStyle = '#8a6230';
+    ctx.lineWidth = 2;
+    for (let s = 0; s < 6; s++) {
+      ctx.rotate(Math.PI / 3);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(20, 0);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // Chaff.
+  ctx.fillStyle = 'rgba(196, 138, 58, 0.35)';
+  for (let i = 0; i < 18; i++) {
+    const fx = ((nowMs * 0.04 + i * 73) % (GAME_WIDTH + 20)) - 10;
+    const fy = 20 + (i * 17 + nowMs * 0.02) % Math.max(8, horizon);
+    ctx.fillRect(fx, fy, 2, 3);
+  }
 }
 
 function renderTravelLandmarks(ctx, camera, level, nowMs) {
@@ -366,22 +461,26 @@ function renderCitySkyline(ctx, camera, level, nowMs) {
 
 export function renderTerrain(ctx, camera, level, nowMs = 0) {
   const city = level.world === 'city';
+  const mill = level.world === 'mill';
   for (const solid of level.solids) {
     // Carts render themselves (they move); skip them here so the generic
     // "thin solid = lily pad" rule below doesn't draw a pad under one.
     if (solid.isCart) continue;
 
     const screenX = solid.x - camera.x;
+    const screenY = solid.y - camera.y;
     if (screenX + solid.width < 0 || screenX > GAME_WIDTH) continue;
+    if (screenY + solid.height < 0 || screenY > GAME_HEIGHT) continue;
 
     if (solid.isBeam) {
-      if (city) fillCaution(ctx, screenX, solid.y, solid.width, solid.height);
-      else if (level.world === 'travel') fillSandstone(ctx, screenX, solid.y, solid.width, solid.height);
+      if (city) fillCaution(ctx, screenX, screenY, solid.width, solid.height);
+      else if (level.world === 'travel') fillSandstone(ctx, screenX, screenY, solid.width, solid.height);
+      else if (mill) fillMillWood(ctx, screenX, screenY, solid.width, solid.height);
       else {
         ctx.fillStyle = '#5e3c22';
-        ctx.fillRect(screenX, solid.y, solid.width, solid.height);
+        ctx.fillRect(screenX, screenY, solid.width, solid.height);
         ctx.fillStyle = '#e0b23a';
-        ctx.fillRect(screenX, solid.y, solid.width, 3);
+        ctx.fillRect(screenX, screenY, solid.width, 3);
       }
       continue;
     }
@@ -390,62 +489,86 @@ export function renderTerrain(ctx, camera, level, nowMs = 0) {
     // get tiled with the grass/dirt tile texture.
     if (solid.height <= 12) {
       if (city) {
-        fillCaution(ctx, screenX, solid.y, solid.width, 8);
+        fillCaution(ctx, screenX, screenY, solid.width, 8);
       } else if (level.world === 'travel') {
-        fillSandstone(ctx, screenX, solid.y, solid.width, 8);
+        fillSandstone(ctx, screenX, screenY, solid.width, 8);
+      } else if (mill) {
+        fillMillWood(ctx, screenX, screenY, solid.width, 8);
       } else {
-        drawSprite(ctx, LILYPAD, screenX - (spriteSize(LILYPAD).width - solid.width) / 2, solid.y, { scale: 3 });
+        drawSprite(ctx, LILYPAD, screenX - (spriteSize(LILYPAD).width - solid.width) / 2, screenY, { scale: 3 });
       }
       continue;
     }
     if (solid.width <= 40) {
-      if (city) fillCaution(ctx, screenX, solid.y, solid.width, solid.height);
-      else if (level.world === 'travel') fillSandstone(ctx, screenX, solid.y, solid.width, solid.height);
-      else drawSprite(ctx, HAY_BALE, screenX, solid.y, { scale: 3 });
+      if (city) fillCaution(ctx, screenX, screenY, solid.width, solid.height);
+      else if (level.world === 'travel') fillSandstone(ctx, screenX, screenY, solid.width, solid.height);
+      else if (mill) fillMillWood(ctx, screenX, screenY, solid.width, solid.height);
+      else drawSprite(ctx, HAY_BALE, screenX, screenY, { scale: 3 });
       continue;
     }
 
     ctx.save();
     ctx.beginPath();
-    ctx.rect(screenX, solid.y, solid.width, solid.height);
+    ctx.rect(screenX, screenY, solid.width, solid.height);
     ctx.clip();
     if (level.world === 'travel') {
       ctx.fillStyle = '#c9a45c';
-      ctx.fillRect(screenX, solid.y, solid.width, solid.height);
+      ctx.fillRect(screenX, screenY, solid.width, solid.height);
       ctx.fillStyle = '#111111';
-      ctx.fillRect(screenX, solid.y, solid.width, 7);
+      ctx.fillRect(screenX, screenY, solid.width, 7);
       ctx.fillStyle = '#f3d39a';
-      ctx.fillRect(screenX, solid.y, solid.width, 5);
+      ctx.fillRect(screenX, screenY, solid.width, 5);
+    } else if (mill) {
+      ctx.fillStyle = '#6b4420';
+      ctx.fillRect(screenX, screenY, solid.width, solid.height);
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(screenX, screenY, solid.width, 7);
+      ctx.fillStyle = '#c48a3a';
+      ctx.fillRect(screenX, screenY, solid.width, 5);
+      if (solid.belt) {
+        const shift = ((nowMs / 40) * solid.belt) % 14;
+        for (let rx = -14 + shift; rx < solid.width; rx += 14) {
+          ctx.fillStyle = '#8a6230';
+          ctx.fillRect(screenX + rx, screenY + 10, 10, 10);
+          ctx.fillStyle = '#e0b23a';
+          ctx.fillRect(screenX + rx + 2, screenY + 13, 6, 3);
+        }
+      } else {
+        ctx.fillStyle = '#5c3a18';
+        for (let d = 14; d < solid.width - 8; d += 18) {
+          ctx.fillRect(screenX + d, screenY + 12, 14, 2);
+        }
+      }
     } else if (city) {
       ctx.fillStyle = '#2a2a32';
-      ctx.fillRect(screenX, solid.y, solid.width, solid.height);
+      ctx.fillRect(screenX, screenY, solid.width, solid.height);
       ctx.fillStyle = '#111111';
-      ctx.fillRect(screenX, solid.y, solid.width, 8);
+      ctx.fillRect(screenX, screenY, solid.width, 8);
       ctx.fillStyle = '#ffd23f';
-      ctx.fillRect(screenX, solid.y, solid.width, 5);
+      ctx.fillRect(screenX, screenY, solid.width, 5);
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(screenX, solid.y, 3, 5);
-      ctx.fillRect(screenX + solid.width - 3, solid.y, 3, 5);
+      ctx.fillRect(screenX, screenY, 3, 5);
+      ctx.fillRect(screenX + solid.width - 3, screenY, 3, 5);
       if (solid.belt) {
         const shift = ((nowMs / 40) * solid.belt) % 14;
         for (let rx = -14 + shift; rx < solid.width; rx += 14) {
           ctx.fillStyle = '#4a4a52';
-          ctx.fillRect(screenX + rx, solid.y + 10, 10, 10);
+          ctx.fillRect(screenX + rx, screenY + 10, 10, 10);
           ctx.fillStyle = '#ffd23f';
-          ctx.fillRect(screenX + rx + 2, solid.y + 13, 6, 3);
+          ctx.fillRect(screenX + rx + 2, screenY + 13, 6, 3);
         }
       } else {
         ctx.fillStyle = '#c8c8d0';
         for (let d = 14; d < solid.width - 8; d += 22) {
-          ctx.fillRect(screenX + d, solid.y + 18, 12, 3);
+          ctx.fillRect(screenX + d, screenY + 18, 12, 3);
         }
       }
     } else {
       ctx.fillStyle = '#7a5230';
-      ctx.fillRect(screenX, solid.y, solid.width, solid.height);
+      ctx.fillRect(screenX, screenY, solid.width, solid.height);
       const tileCanvas = getSpriteCanvas(GROUND_TILE, 3, false);
       for (let tx = 0; tx < solid.width + groundTileSize.width; tx += groundTileSize.width) {
-        ctx.drawImage(tileCanvas, screenX + tx, solid.y);
+        ctx.drawImage(tileCanvas, screenX + tx, screenY);
       }
     }
     ctx.restore();
@@ -463,32 +586,42 @@ export function renderThemeOverlay(ctx, theme) {
 export function renderGoal(ctx, camera, level) {
   const g = level.goal;
   const screenX = g.x - camera.x;
+  const gy = g.y - camera.y;
   if (screenX < -40 || screenX > GAME_WIDTH + 40) return;
+  if (gy > GAME_HEIGHT + 20 || gy + g.height < -20) return;
   if (level.world === 'travel') {
     ctx.fillStyle = '#111111';
-    ctx.fillRect(screenX - 10, g.y + 18, 40, g.height - 18);
-    fillSandstone(ctx, screenX - 10, g.y + 16, 40, 10);
+    ctx.fillRect(screenX - 10, gy + 18, 40, g.height - 18);
+    fillSandstone(ctx, screenX - 10, gy + 16, 40, 10);
     ctx.fillStyle = '#e63946';
-    ctx.fillRect(screenX + 4, g.y + 4, 12, 12);
+    ctx.fillRect(screenX + 4, gy + 4, 12, 12);
     return;
   }
   if (level.world === 'city') {
     ctx.fillStyle = '#111111';
-    ctx.fillRect(screenX - 10, g.y + 18, 40, g.height - 18);
-    fillCaution(ctx, screenX - 10, g.y + 16, 40, 10);
+    ctx.fillRect(screenX - 10, gy + 18, 40, g.height - 18);
+    fillCaution(ctx, screenX - 10, gy + 16, 40, 10);
     ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(screenX, g.y + 48, 18, 42);
+    ctx.fillRect(screenX, gy + 48, 18, 42);
     ctx.fillStyle = '#e63946';
-    ctx.fillRect(screenX + 4, g.y + 4, 12, 12);
+    ctx.fillRect(screenX + 4, gy + 4, 12, 12);
+    return;
+  }
+  if (level.world === 'mill') {
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(screenX - 10, gy + 18, 40, g.height - 18);
+    fillMillWood(ctx, screenX - 10, gy + 16, 40, 10);
+    ctx.fillStyle = '#e63946';
+    ctx.fillRect(screenX + 4, gy + 4, 12, 12);
     return;
   }
   ctx.fillStyle = '#8a8f98';
-  ctx.fillRect(screenX, g.y, 6, g.height);
+  ctx.fillRect(screenX, gy, 6, g.height);
   ctx.fillStyle = '#e63946';
   ctx.beginPath();
-  ctx.moveTo(screenX + 6, g.y);
-  ctx.lineTo(screenX + 34, g.y + 10);
-  ctx.lineTo(screenX + 6, g.y + 20);
+  ctx.moveTo(screenX + 6, gy);
+  ctx.lineTo(screenX + 34, gy + 10);
+  ctx.lineTo(screenX + 6, gy + 20);
   ctx.closePath();
   ctx.fill();
 }

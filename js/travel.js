@@ -12,7 +12,7 @@ function fadeKill(self, ctx, camera, sprite, flip, scale = 3) {
   const screenX = self.x - camera.x;
   ctx.save();
   ctx.globalAlpha = t;
-  ctx.translate(screenX + self.width / 2, self.y + self.height);
+  ctx.translate(screenX + self.width / 2, self.y - camera.y + self.height);
   ctx.scale(1, t);
   drawSprite(ctx, sprite, -self.width / 2, -self.height, { flip, scale });
   ctx.restore();
@@ -60,7 +60,7 @@ export class Snake {
 
   render(ctx, camera) {
     if (this.state === 'dying') return fadeKill(this, ctx, camera, SNAKE, this.dir < 0, 2);
-    drawSprite(ctx, SNAKE, this.x - camera.x, this.y, { scale: 2, flip: this.dir < 0 });
+    drawSprite(ctx, SNAKE, this.x - camera.x, this.y - camera.y, { scale: 2, flip: this.dir < 0 });
   }
 }
 
@@ -106,7 +106,7 @@ export class Scorpion {
 
   render(ctx, camera) {
     if (this.state === 'dying') return fadeKill(this, ctx, camera, SCORPION, this.dir < 0, 3);
-    drawSprite(ctx, SCORPION, this.x - camera.x, this.y, { scale: 3, flip: this.dir < 0 });
+    drawSprite(ctx, SCORPION, this.x - camera.x, this.y - camera.y, { scale: 3, flip: this.dir < 0 });
   }
 }
 
@@ -171,7 +171,7 @@ export class Goat {
 
   render(ctx, camera) {
     if (this.state === 'dying') return fadeKill(this, ctx, camera, GOAT, this.dir < 0, 3);
-    drawSprite(ctx, GOAT, this.x - camera.x, this.y, { scale: 3, flip: this.dir < 0 });
+    drawSprite(ctx, GOAT, this.x - camera.x, this.y - camera.y, { scale: 3, flip: this.dir < 0 });
   }
 }
 
@@ -222,6 +222,6 @@ export class Hawk {
 
   render(ctx, camera) {
     if (this.state === 'dying') return fadeKill(this, ctx, camera, HAWK, this.dir < 0, 2);
-    drawSprite(ctx, HAWK, this.x - camera.x, this.y, { scale: 2, flip: this.dir < 0 });
+    drawSprite(ctx, HAWK, this.x - camera.x, this.y - camera.y, { scale: 2, flip: this.dir < 0 });
   }
 }

@@ -2,7 +2,7 @@
 // objects. This builder is the only place that knows how a level is
 // assembled, so adding a level never means touching code -- just data.
 
-import { GAME_HEIGHT, GROUND_Y } from './constants.js';
+import { GAME_HEIGHT, GROUND_Y, PLAYER_HEIGHT } from './constants.js';
 import { LEVELS, LEVEL_COUNT, STAGE_NAMES } from './levels.js';
 import { Frog } from './enemy.js';
 import { Goose, Cart } from './hazards.js';
@@ -25,6 +25,12 @@ function groundStrip(x, width, y = GROUND_Y) {
 
 function hayPlatform(x, y) {
   return { x, y, width: hayBaleSize.width, height: hayBaleSize.height };
+}
+
+function ledgeStrip(x, width, y, belt) {
+  const strip = { x, y, width, height: 18, isLedge: true };
+  if (belt) strip.belt = belt;
+  return strip;
 }
 
 function lilyPlatform(centerX, topY) {
@@ -65,6 +71,10 @@ export function createLevel(index = 0) {
     if (belt) strip.belt = belt;
     solids.push(strip);
   }
+  for (const row of (data.ledges ?? [])) {
+    const [x, width, y, belt] = row;
+    solids.push(ledgeStrip(x, width, y, belt));
+  }
   for (const [x, y] of data.hay) solids.push(hayPlatform(x, y));
 
   for (const [centerX, topY] of data.lilies) {
@@ -93,12 +103,12 @@ export function createLevel(index = 0) {
     solids.push(beam);
   }
 
-  const pigs = (data.pigs ?? []).map(([x]) => new Pig(x));
+  const pigs = (data.pigs ?? []).map((row) => new Pig(row[0], row[1]));
   const bees = (data.bees ?? []).map(([x, y, patrol]) => new Bee(x, y, patrol));
   const moles = (data.moles ?? []).map(([x]) => new Mole(x));
   const crows = (data.crows ?? []).map(([x, y, span]) => new Crow(x, y, span));
   const bounces = (data.bounces ?? []).map(([x, y]) => new BouncePad(x, y, data.world || 'farm'));
-  const rats = (data.rats ?? []).map(([x]) => new Rat(x));
+  const rats = (data.rats ?? []).map((row) => new Rat(row[0], row[1]));
   const pigeons = (data.pigeons ?? []).map(([x, y, span]) => new Pigeon(x, y, span));
   const taxis = (data.taxis ?? []).map(([x, y, range]) => new Taxi(x, y, range));
   for (const taxi of taxis) solids.push(taxi.solid);
@@ -115,10 +125,18 @@ export function createLevel(index = 0) {
   const goats = (data.goats ?? []).map(([x]) => new Goat(x));
   const hawks = (data.hawks ?? []).map(([x, y, span]) => new Hawk(x, y, span));
 
-  const ponds = data.ponds.map(([x, endX]) => ({ x, width: endX - x }));
+  const ponds = (data.ponds ?? []).map(([x, endX]) => ({ x, width: endX - x }));
+
+  const spawn = data.spawn
+    ? { x: data.spawn[0], y: data.spawn[1] }
+    : { x: 40, y: GROUND_Y - PLAYER_HEIGHT };
 
   // Respawn on the safe ground just past each pond you've already cleared.
-  const checkpoints = [40, ...data.ponds.map(([, endX]) => endX + 20)];
+  // Mill stages list [x, y] saves along the route (including reverse wings).
+  const saves = (data.saves ?? []).map(([x, y]) => ({ x, y }));
+  const checkpoints = saves.length
+    ? saves.map((s) => s.x)
+    : [spawn.x, ...ponds.map((p) => p.x + p.width + 20)];
 
   const buildings = data.buildings.map(([type, x]) => ({
     type,
@@ -133,7 +151,17 @@ export function createLevel(index = 0) {
     seed: i,
   }));
 
-  const goal = { x: data.width - 120, y: GROUND_Y - 90, width: 16, height: 90 };
+  const goal = {
+    x: data.goal ? data.goal[0] : data.width - 120,
+    y: data.goal ? data.goal[1] : GROUND_Y - 90,
+    width: 16,
+    height: 90,
+  };
+
+  const tops = solids.map((s) => s.y);
+  const camMinY = data.world === 'mill'
+    ? Math.min(0, Math.min(goal.y, ...tops) - 160)
+    : 0;
 
   return {
     index,
@@ -146,9 +174,11 @@ export function createLevel(index = 0) {
     landmark: data.landmark || '',
     cityGate: !!data.cityGate,
     travelGate: !!data.travelGate,
+    millGate: !!data.millGate,
     allowWhip: !!(data.world && data.world !== 'farm' && data.world !== 'city'),
     width: data.width,
     wind: data.wind || 0,
+    spawn, saves, camMinY,
     solids, lilyPads, frogs, geese, carts, pickups, ponds, checkpoints,
     pigs, bees, moles, crows, bounces, beams,
     rats, pigeons, taxis, hydrants, geysers,

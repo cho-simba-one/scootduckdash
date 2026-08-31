@@ -88,10 +88,16 @@ export class Game {
   loadLevel(index, hearts) {
     this.levelIndex = index;
     this.level = createLevel(index);
-    this.player = new Player(40, GROUND_Y - PLAYER_HEIGHT);
+    const spawn = this.level.spawn;
+    this.player = new Player(spawn.x, spawn.y);
     this.player.hearts = hearts;
-    this.camera = new Camera(this.level.width);
-    this.camera.follow(this.player.x);
+    this.camera = new Camera(this.level.width, {
+      explore: this.level.world === 'mill',
+      minY: this.level.camMinY,
+      maxY: 0,
+    });
+    this.camera.follow(this.player.x, this.player.y, this.player.facing);
+    this.level.lastSave = { x: spawn.x, y: spawn.y };
     this.projectiles = [];
     this.shotsThisLevel = 0;
     this.ignoreShoot = false;
@@ -552,13 +558,26 @@ export class Game {
       if (box && overlaps(playerBox, box)) player.takeDamage(nowMs, jet.x);
     }
 
+    if (level.world === 'mill' && level.saves && level.saves.length) {
+      for (const s of level.saves) {
+        if (Math.abs(player.x - s.x) < 80 && Math.abs(player.y - s.y) < 70) {
+          level.lastSave = s;
+        }
+      }
+    }
+
     // Fell in a pond -- ouch, respawn at the last checkpoint reached.
     if (player.y > GAME_HEIGHT + 60) {
       Music.play('splash');
-      const checkpointX = [...level.checkpoints].reverse().find((cx) => cx <= player.x) ?? level.checkpoints[0];
       player.takeDamage(nowMs, player.x);
-      player.x = checkpointX;
-      player.y = GROUND_Y - PLAYER_HEIGHT;
+      if (level.world === 'mill' && level.lastSave) {
+        player.x = level.lastSave.x;
+        player.y = level.lastSave.y;
+      } else {
+        const checkpointX = [...level.checkpoints].reverse().find((cx) => cx <= player.x) ?? level.checkpoints[0];
+        player.x = checkpointX;
+        player.y = GROUND_Y - PLAYER_HEIGHT;
+      }
       player.vx = 0;
       player.vy = 0;
     }
@@ -590,7 +609,7 @@ export class Game {
       }
     }
 
-    this.camera.follow(player.x);
+    this.camera.follow(player.x, player.y, player.facing);
   }
 
   render(nowMs) {
@@ -652,9 +671,11 @@ export class Game {
         ctx,
         allEggsFound() ? 'EGG HUNTER!' : 'YOU WIN!',
         '#2a9d3f',
-        level.world === 'travel'
-          ? 'The clapper snaps back in. The bell dings. Grandma Goose hears it from here.'
-          : 'Scoot rings the new bell all the way home.',
+        level.world === 'mill'
+          ? 'The pie is a little dusty and also the best pie of his life.'
+          : level.world === 'travel'
+            ? 'The clapper snaps back in. The bell dings. Grandma Goose hears it from here.'
+            : 'Scoot rings the new bell all the way home.',
       );
     }
     if (this.state === STATE.GAMEOVER) renderEndScreen(ctx, 'GAME OVER', '#e63946');
@@ -775,6 +796,11 @@ function renderIntro(ctx, level, hover) {
     ctx.fillStyle = '#f4c48a';
     ctx.font = "8px 'Press Start 2P', monospace";
     ctx.fillText('THE WORLD', GAME_WIDTH / 2, y);
+    y += 16;
+  } else if (level.millGate) {
+    ctx.fillStyle = '#c48a3a';
+    ctx.font = "8px 'Press Start 2P', monospace";
+    ctx.fillText('THE MILL', GAME_WIDTH / 2, y);
     y += 16;
   }
 

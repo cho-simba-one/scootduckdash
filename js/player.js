@@ -188,11 +188,12 @@ export class Player {
     if (flicker) return;
     const grid = isGod() ? withWhiteEye(this.currentSprite()) : this.currentSprite();
     const screenX = this.x - camera.x;
+    const screenY = this.y - camera.y;
     if (this.whipTimer > 0) {
-      renderTailWhip(ctx, grid, screenX, this.y, this.facing, this.whipTimer);
+      renderTailWhip(ctx, grid, screenX, screenY, this.facing, this.whipTimer);
       return;
     }
-    drawSprite(ctx, grid, screenX, this.y, { flip: this.facing < 0 });
+    drawSprite(ctx, grid, screenX, screenY, { flip: this.facing < 0 });
   }
 }
 

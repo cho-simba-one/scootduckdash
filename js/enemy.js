@@ -102,11 +102,12 @@ export class Frog {
 
   render(ctx, camera) {
     const screenX = this.x - camera.x;
+    const screenY = this.y - camera.y;
     if (this.state === 'dying') {
       const t = Math.max(0, this.deathTimer / DEATH_FADE_MS);
       ctx.save();
       ctx.globalAlpha = t;
-      ctx.translate(screenX + this.width / 2, this.y + this.height);
+      ctx.translate(screenX + this.width / 2, screenY + this.height);
       ctx.scale(1 + (1 - t) * 0.4, t);
       drawSprite(ctx, FROG_IDLE, -this.width / 2, -this.height, { flip: this.facing < 0 });
       ctx.restore();
@@ -114,12 +115,12 @@ export class Frog {
     }
 
     const sprite = this.state === 'hop' ? FROG_HOP : FROG_IDLE;
-    drawSprite(ctx, sprite, screenX, this.y, { flip: this.facing < 0 });
+    drawSprite(ctx, sprite, screenX, screenY, { flip: this.facing < 0 });
 
     const tongue = this.getTongueHitbox();
     if (tongue) {
       ctx.fillStyle = '#ffb6c1';
-      ctx.fillRect(tongue.x - camera.x, tongue.y, tongue.width, tongue.height);
+      ctx.fillRect(tongue.x - camera.x, tongue.y - camera.y, tongue.width, tongue.height);
     }
   }
 }

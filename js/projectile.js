@@ -27,7 +27,7 @@ export class Projectile {
   render(ctx, camera) {
     const canvas = getSpriteCanvas(PROPELLER_ICON, 3, false);
     const screenX = this.x - camera.x;
-    const screenY = this.y;
+    const screenY = this.y - camera.y;
     ctx.save();
     ctx.translate(screenX, screenY);
     ctx.rotate((this.age / 40) % (Math.PI * 2));

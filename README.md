@@ -10,8 +10,9 @@ for the next one.
 ## Current scope (playable demo)
 
 - Title screen with mouse-clickable START button
-- Two worlds so far (farm, then city), each stage with its own track, a START
-  button, and a skill to learn
+- Four worlds (farm, city, world tour, mill), each stage with its own track, a
+  START button, and a skill to learn. Mill stages climb and reverse; the camera
+  looks ahead by facing and follows Y.
 - Player controls:
   - Keyboard: Left / Right move, Up jump, Down duck, Space shoot
   - Touch (phones/tablets): on-screen buttons auto-appear on any touch-capable
@@ -53,8 +54,8 @@ js/                   all game code (ES modules)
   hazards.js                    geese + moving carts
   level.js                       builder: data -> collision/entities
   levels.js                       declarative stage data
-  camera.js                        side-scrolling camera
-  background.js                     sky / farm / city parallax
+  camera.js                        side-scrolling camera (mill also follows Y)
+  background.js                     sky / farm / city / mill parallax
   titleScreen.js                     title screen state + START button
   game.js                             main game state machine + loop
   main.js                              bootstrap
@@ -68,14 +69,23 @@ another stage is a data edit, never a code edit (plus a track in
 `js/musicData.js`). Hearts carry between stages and you get one back for
 clearing one. The player-facing UI shows the stage name only.
 
-**Farm** teaches frogs, geese, hay carts, pigs, duck-under rails, bees,
+**Farm (1-10, COMPLETE)** teaches frogs, geese, hay carts, pigs, duck-under rails, bees,
 bounce flowers, moles, crows, and wind.
 
-**City** opens with a "THE CITY" card. It teaches rats, pigeons, taxi roofs,
+**City (11-20, COMPLETE)** opens with a "THE CITY" card. It teaches rats, pigeons, taxi roofs,
 hydrant jets, steam vents, conveyors, pouncing cats, dumpster lids, drones,
 jump-over traffic, and crane lifts. Potholes reuse the pond death, painted
 as caution stripes. Night / rain / neon tints sit on a live skyline (blinking
 windows, elevated train, two-way traffic, storefronts, lamps, weather).
+
+**World (21-30, COMPLETE)** is the travel tour. Giza through World Scoot-Off.
+The hawk stole the bell clapper; Scoot puts the ding back. Grandma Goose
+hears it from the farm. That is the last line of stage 30 and the lock.
+
+**Mill (31-40)** opens with a "THE MILL" card. Grandma's thank-you pie is
+in the grain mill. Stages climb onto catwalks and lofts, then turn left;
+the camera looks ahead by facing and follows Y so a loft is not a clip.
+Ledges, a placed flag, and saves are data. 1-30 keep the old X-only camera.
 
 ### Level design constraint
 Jump distance is finite, so a pond gap that's too wide makes a stage literally
