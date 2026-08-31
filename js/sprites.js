@@ -62,6 +62,15 @@ export const DUCK_JUMP = patchRows(DUCK_IDLE, {
   12: '................s....',
 });
 
+// Whip pose: duck hangs on the stem, the long deck is drawn separately
+// as it yaws around the column.
+export const DUCK_WHIP = patchRows(DUCK_JUMP, {
+  13: '................s....',
+  14: '................s....',
+  15: '................k....',
+  16: '................k....',
+});
+
 // Shorter overall silhouette for ducking -- also used for the smaller
 // hitbox height in player.js. Crouched low enough that the rider's head
 // ends up right about at handlebar height.

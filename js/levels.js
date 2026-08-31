@@ -786,7 +786,7 @@ export const LEVELS = [
   {
     name: 'Giza Dawn',
     subtitle: 'Down in the air.',
-    skill: 'Down in the air to tail-whip. It hits foes and stretches the jump.',
+    skill: 'Tap Down in the air to kick the deck. Hits in front and stretches the jump.',
     story: 'A souvenir hawk stole the clapper from Scoot\'s new bell. First stop: Egypt. The hawk dropped a trail of sand.',
     world: 'travel',
     landmark: 'giza',

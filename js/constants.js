@@ -17,13 +17,14 @@ export const PLAYER_JUMP_VELOCITY = -9.6;
 export const PLAYER_STOMP_BOUNCE = -6.5;
 export const PLAYER_PAD_BOUNCE = -11.4; // flower pads -- enough extra height to reach secret eggs
 
-// Tail-whip (travel world and later). One spin per jump; farm/city never arm it.
-export const WHIP_DURATION_MS = 280;
-export const WHIP_POP = -2.4;
-export const WHIP_SPEED_BONUS = 1.05;
-export const WHIP_MAX_SPEED = 4.45;
-export const WHIP_GRAVITY_MUL = 0.58;
-export const WHIP_REACH = 12;
+// Tail-whip (travel world and later): kick the deck around the stem.
+// Farm/city never arm it. A later ground-slam will reuse a full-body spin.
+export const WHIP_DURATION_MS = 220;
+export const WHIP_POP = -1.35;
+export const WHIP_SPEED_BONUS = 0.55;
+export const WHIP_MAX_SPEED = 3.9;
+export const WHIP_GRAVITY_MUL = 0.82;
+export const WHIP_REACH = 22;
 
 export const PLAYER_WIDTH = 26;
 export const PLAYER_HEIGHT = 30;

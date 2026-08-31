@@ -181,8 +181,8 @@ export const SFX = {
   },
 
   whip(ctx, dest) {
-    noise(ctx, dest, { dur: 0.14, type: 'bandpass', freq: 900, sweepTo: 280, q: 1.4, gain: 0.1 });
-    tone(ctx, dest, { from: 280, to: 520, dur: 0.12, type: 'sawtooth', gain: 0.07 });
+    noise(ctx, dest, { dur: 0.12, type: 'bandpass', freq: 1400, sweepTo: 500, q: 2.2, gain: 0.09 });
+    tone(ctx, dest, { from: 420, to: 180, dur: 0.1, type: 'square', gain: 0.05 });
   },
 
   snake(ctx, dest) {

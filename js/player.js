@@ -6,7 +6,7 @@ import {
   WHIP_DURATION_MS, WHIP_POP, WHIP_SPEED_BONUS, WHIP_MAX_SPEED,
   WHIP_GRAVITY_MUL, WHIP_REACH,
 } from './constants.js';
-import { DUCK_IDLE, DUCK_RUN1, DUCK_RUN2, DUCK_JUMP, DUCK_DUCK, withWhiteEye } from './sprites.js';
+import { DUCK_IDLE, DUCK_RUN1, DUCK_RUN2, DUCK_JUMP, DUCK_DUCK, DUCK_WHIP, withWhiteEye } from './sprites.js';
 import { isGod } from './cheats.js';
 import { drawSprite, spriteSize } from './pixelArt.js';
 import { Input } from './input.js';
@@ -31,10 +31,11 @@ export class Player {
     this.whipTimer = 0;
     this.whipUsed = false;
     this.whipStarted = false;
+    this.wasDown = false;
   }
 
   get width() {
-    return this.ducking ? spriteSize(DUCK_DUCK).width : PLAYER_WIDTH;
+    return PLAYER_WIDTH;
   }
 
   get height() {
@@ -51,12 +52,12 @@ export class Player {
 
   getWhipHitbox() {
     const b = this.getHitbox();
-    return {
-      x: b.x - WHIP_REACH,
-      y: b.y - WHIP_REACH,
-      width: b.width + WHIP_REACH * 2,
-      height: b.height + WHIP_REACH * 2,
-    };
+    const y = b.y + b.height * 0.4;
+    const h = b.height * 0.6;
+    if (this.facing > 0) {
+      return { x: b.x + b.width * 0.35, y, width: b.width * 0.65 + WHIP_REACH, height: h };
+    }
+    return { x: b.x - WHIP_REACH, y, width: b.width * 0.65 + WHIP_REACH, height: h };
   }
 
   isInvincible(nowMs) {
@@ -94,18 +95,40 @@ export class Player {
   update(dtMs, solids, nowMs, allowWhip = false) {
     const dt = dtMs / 16.6667; // normalize to "60fps units" so tuning numbers stay sane
 
+    const down = Input.down();
+    const downPressed = down && !this.wasDown;
+    const duckDelta = PLAYER_HEIGHT - PLAYER_DUCK_HEIGHT;
+
     // Ducking can only start/stop while grounded -- classic Mario rule.
+    // Grow/shrink FROM THE FEET so a lily pad doesn't vanish under you.
     if (this.grounded) {
-      this.ducking = Input.down();
       this.whipTimer = 0;
       this.whipUsed = false;
-    } else if (allowWhip && !this.whipUsed && Input.down()) {
-      this.whipUsed = true;
-      this.whipTimer = WHIP_DURATION_MS;
-      this.whipStarted = true;
-      this.vy += WHIP_POP;
-      this.vx += this.facing * WHIP_SPEED_BONUS;
+      if (down && !this.ducking) {
+        this.y += duckDelta;
+        this.ducking = true;
+      } else if (!down && this.ducking) {
+        const standY = this.y - duckDelta;
+        if (fits(solids, this.x, standY, this.width, PLAYER_HEIGHT)) {
+          this.y = standY;
+          this.ducking = false;
+        }
+      }
+    } else {
+      if (this.ducking) {
+        this.y -= duckDelta;
+        this.ducking = false;
+      }
+      // Fresh tap in the air -- holding Down from a crouch must not auto-whip.
+      if (allowWhip && !this.whipUsed && downPressed) {
+        this.whipUsed = true;
+        this.whipTimer = WHIP_DURATION_MS;
+        this.whipStarted = true;
+        this.vy += WHIP_POP;
+        this.vx += this.facing * WHIP_SPEED_BONUS;
+      }
     }
+    this.wasDown = down;
 
     if (this.whipTimer > 0) this.whipTimer -= dtMs;
 
@@ -114,10 +137,8 @@ export class Player {
       ? WHIP_MAX_SPEED
       : (this.ducking ? PLAYER_DUCK_MAX_SPEED : PLAYER_MAX_SPEED);
     let moveInput = 0;
-    if (!this.ducking) {
-      if (Input.left()) moveInput -= 1;
-      if (Input.right()) moveInput += 1;
-    }
+    if (Input.left()) moveInput -= 1;
+    if (Input.right()) moveInput += 1;
     if (moveInput !== 0) {
       this.vx += moveInput * PLAYER_MOVE_ACCEL * dt;
       this.facing = moveInput;
@@ -155,6 +176,7 @@ export class Player {
   }
 
   currentSprite() {
+    if (this.whipTimer > 0) return DUCK_WHIP;
     if (!this.grounded) return DUCK_JUMP;
     if (this.ducking) return DUCK_DUCK;
     if (Math.abs(this.vx) > 0.15) return this.animFrame === 0 ? DUCK_RUN1 : DUCK_RUN2;
@@ -167,22 +189,64 @@ export class Player {
     const grid = isGod() ? withWhiteEye(this.currentSprite()) : this.currentSprite();
     const screenX = this.x - camera.x;
     if (this.whipTimer > 0) {
-      const size = spriteSize(grid);
-      const spin = (1 - this.whipTimer / WHIP_DURATION_MS) * Math.PI * 2 * this.facing;
-      ctx.save();
-      ctx.translate(screenX + size.width / 2, this.y + size.height / 2);
-      ctx.rotate(spin);
-      drawSprite(ctx, grid, -size.width / 2, -size.height / 2, { flip: this.facing < 0 });
-      ctx.strokeStyle = 'rgba(255,210,63,0.7)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(0, 0, size.width * 0.55, 0, Math.PI * 1.2);
-      ctx.stroke();
-      ctx.restore();
+      renderTailWhip(ctx, grid, screenX, this.y, this.facing, this.whipTimer);
       return;
     }
     drawSprite(ctx, grid, screenX, this.y, { flip: this.facing < 0 });
   }
+}
+
+/** Duck stays on the stem; the deck yaws around it on the floor plane and
+ * kicks forward -- Mario tail, not a full-body spin (that's a future slam). */
+function renderTailWhip(ctx, grid, screenX, y, facing, whipTimer) {
+  const size = spriteSize(grid);
+  const t = 1 - Math.max(0, whipTimer) / WHIP_DURATION_MS;
+  const lean = facing * 0.18;
+  ctx.save();
+  ctx.translate(screenX + size.width / 2, y + size.height * 0.7);
+  ctx.rotate(lean);
+  drawSprite(ctx, grid, -size.width / 2, -size.height * 0.7, { flip: facing < 0 });
+  ctx.restore();
+
+  const stemX = screenX + (facing > 0 ? size.width * 0.76 : size.width * 0.24);
+  const stemY = y + size.height * 0.72;
+  const yaw = facing * (-0.35 + t * Math.PI * 1.15);
+  const cos = Math.cos(yaw);
+  const sin = Math.sin(yaw);
+  const len = 26;
+  const endX = stemX + facing * cos * len;
+  const endY = stemY + sin * 6;
+  const thick = 5 + (1 - Math.abs(cos)) * 5;
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255, 210, 63, 0.45)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(stemX, stemY, 16, facing > 0 ? -0.6 : Math.PI - 0.2, facing > 0 ? 0.9 : Math.PI + 0.6);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = thick + 2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(stemX, stemY);
+  ctx.lineTo(endX, endY);
+  ctx.stroke();
+  ctx.strokeStyle = '#2a9d3f';
+  ctx.lineWidth = thick;
+  ctx.beginPath();
+  ctx.moveTo(stemX, stemY);
+  ctx.lineTo(endX, endY);
+  ctx.stroke();
+  ctx.fillStyle = '#1a1a1a';
+  ctx.beginPath();
+  ctx.arc(endX, endY, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#8d99ae';
+  ctx.beginPath();
+  ctx.arc(endX, endY, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 }
 
 /** Discrete AABB collision resolution along a single axis. Simple, cheap,
@@ -212,4 +276,12 @@ function resolveAxis(entity, solids, axis) {
 
 export function overlaps(a, b) {
   return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+function fits(solids, x, y, w, h) {
+  const box = { x, y, width: w, height: h };
+  for (const solid of solids) {
+    if (overlaps(box, solid)) return false;
+  }
+  return true;
 }
