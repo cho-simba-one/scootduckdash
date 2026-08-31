@@ -212,4 +212,34 @@ export const SFX = {
       });
     });
   },
+
+  /** Foreman takes a hit -- heavy indignant grunt+thud, lower than frog/goose
+   * since he's the biggest thing on screen. Plays up to 3x per fight so it
+   * stays short and doesn't build a fanfare's worth of layers. */
+  boss(ctx, dest) {
+    tone(ctx, dest, { from: 160, to: 60, dur: 0.22, type: 'sawtooth', gain: 0.11 });
+    tone(ctx, dest, { from: 90, to: 45, dur: 0.16, type: 'square', gain: 0.08, delay: 0.02 });
+    noise(ctx, dest, { dur: 0.14, type: 'lowpass', freq: 500, sweepTo: 120, gain: 0.09 });
+  },
+
+  /** Foreman defeated -- comic descending collapse (three falling square
+   * tones) followed by a papery flutter of scattering paperwork. Descending
+   * on purpose: every fanfare in this game rises, so this reads as a
+   * one-off SFX rather than a victory jingle. */
+  bossDown(ctx, dest) {
+    tone(ctx, dest, { from: 300, to: 200, dur: 0.14, type: 'square', gain: 0.12 });
+    tone(ctx, dest, { from: 220, to: 140, dur: 0.14, type: 'square', gain: 0.10, delay: 0.12 });
+    tone(ctx, dest, { from: 150, to: 70, dur: 0.18, type: 'square', gain: 0.09, delay: 0.24 });
+    noise(ctx, dest, { dur: 0.05, type: 'bandpass', freq: 3500, q: 4, gain: 0.05, delay: 0.40 });
+    noise(ctx, dest, { dur: 0.05, type: 'bandpass', freq: 3200, q: 4, gain: 0.05, delay: 0.46 });
+    noise(ctx, dest, { dur: 0.06, type: 'bandpass', freq: 2800, q: 3.5, gain: 0.045, delay: 0.53 });
+    noise(ctx, dest, { dur: 0.07, type: 'bandpass', freq: 2400, q: 3, gain: 0.04, delay: 0.61 });
+  },
+
+  /** Foreman hurls a rubber TIME CARD stamp -- a quick air-cut whoosh
+   * immediately followed by a low thock, like the whip sound but tighter. */
+  bossThrow(ctx, dest) {
+    noise(ctx, dest, { dur: 0.06, type: 'bandpass', freq: 2200, sweepTo: 700, q: 2.5, gain: 0.08 });
+    tone(ctx, dest, { from: 180, to: 90, dur: 0.05, type: 'square', gain: 0.10, delay: 0.05 });
+  },
 };

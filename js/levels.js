@@ -1397,9 +1397,9 @@ export const LEVELS = [
   },
   {
     name: 'Pie Safe',
-    subtitle: 'The mill is a building.',
+    subtitle: 'Nobody clocks out early.',
     skill: 'Right on the dock, climb two floors, left through the west wing.',
-    story: 'The raccoon is tired. Scoot is not. He takes the pie. Grandma says it is a little dusty and also the best pie of his life.',
+    story: 'The raccoon works for someone, and that someone stamps Grandma\'s pie MILL PROPERTY. He blocks the pie safe with his whole body. Scoot has never once had a job.',
     world: 'mill',
     width: 4400,
     theme: THEMES.millFair,
@@ -1427,6 +1427,9 @@ export const LEVELS = [
     buildings: [],
     animals: [],
     goal: [140, -72],
+    // THE FOREMAN guards the pie safe on the top ledge (y=18 spans 80-1480).
+    // The goal stays locked until he clocks out.
+    boss: { type: 'work', x: 820, floorY: 18, minX: 200, maxX: 1420, hp: 3 },
     saves: [[2200, 200], [2300, 58], [1600, 58], [200, -12]],
   },
 ];

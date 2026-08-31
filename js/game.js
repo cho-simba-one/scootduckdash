@@ -558,6 +558,27 @@ export class Game {
       if (box && overlaps(playerBox, box)) player.takeDamage(nowMs, jet.x);
     }
 
+    // The boss is an entity, not a game state -- hitFoe treats it like any
+    // foe (HP hides behind stomp()), and its thrown hazards are checked
+    // exactly like the jets above. Sfx flags are set by the boss and
+    // consumed here, matching the frog-tongue precedent.
+    if (level.boss) {
+      const boss = level.boss;
+      boss.update(dtMs, nowMs, playerBox);
+      hitFoe(player, playerBox, this.projectiles, boss, nowMs, 'boss');
+      for (const box of boss.getHazardBoxes()) {
+        if (overlaps(playerBox, box)) player.takeDamage(nowMs, boss.x);
+      }
+      if (boss.throwPending) {
+        boss.throwPending = false;
+        Music.play('bossThrow');
+      }
+      if (boss.downPending) {
+        boss.downPending = false;
+        Music.play('bossDown');
+      }
+    }
+
     if (level.world === 'mill' && level.saves && level.saves.length) {
       for (const s of level.saves) {
         if (Math.abs(player.x - s.x) < 80 && Math.abs(player.y - s.y) < 70) {
@@ -586,7 +607,8 @@ export class Game {
     // sting -- checked once here rather than at every damage site.
     if (player.hearts < heartsBefore) Music.play('hurt');
 
-    if (overlaps(playerBox, level.goal)) {
+    // A live boss keeps the goal locked -- no new game state, one condition.
+    if (overlaps(playerBox, level.goal) && (!level.boss || level.boss.defeated)) {
       const isFinalLevel = this.levelIndex >= LEVEL_COUNT - 1;
       if (isFinalLevel) {
         this.state = STATE.WIN;
@@ -650,6 +672,7 @@ export class Game {
     for (const drone of level.drones) drone.render(ctx, this.camera);
     for (const dump of level.dumpsters) dump.render(ctx, this.camera);
     for (const goose of level.geese) goose.render(ctx, this.camera);
+    if (level.boss) level.boss.render(ctx, this.camera);
     renderGoal(ctx, this.camera, level);
     this.player.render(ctx, this.camera, nowMs);
     for (const shot of this.projectiles) shot.render(ctx, this.camera);
@@ -672,7 +695,7 @@ export class Game {
         allEggsFound() ? 'EGG HUNTER!' : 'YOU WIN!',
         '#2a9d3f',
         level.world === 'mill'
-          ? 'The pie is a little dusty and also the best pie of his life.'
+          ? "Shift's over. The pie is a little dusty and also the best pie of his life."
           : level.world === 'travel'
             ? 'The clapper snaps back in. The bell dings. Grandma Goose hears it from here.'
             : 'Scoot rings the new bell all the way home.',
@@ -923,6 +946,19 @@ function renderHud(ctx, player, level) {
   if (eggCount() > 0) {
     ctx.fillStyle = '#e0b23a';
     ctx.fillText(`EGGS ${eggCount()}`, 16, 80);
+  }
+
+  // Boss bar: title plus heart pips, top-right, only once he's engaged.
+  const boss = level.boss;
+  if (boss && boss.engaged && !boss.defeated) {
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillText(boss.title, GAME_WIDTH - 16, 24);
+    ctx.textAlign = 'left';
+    for (let i = 0; i < boss.maxHp; i++) {
+      ctx.fillStyle = i < boss.hp ? '#8c2f2f' : 'rgba(0,0,0,0.15)';
+      ctx.fillRect(GAME_WIDTH - 16 - (boss.maxHp - i) * 16, 32, 12, 12);
+    }
   }
 }
 

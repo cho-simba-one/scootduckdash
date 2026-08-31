@@ -10,6 +10,7 @@ import { Pickup } from './pickups.js';
 import { Pig, Bee, Mole, Crow, BouncePad } from './critters.js';
 import { Rat, Pigeon, Taxi, Hydrant, Geyser, Cat, Drone, Dumpster, Crane, Traffic } from './city.js';
 import { Snake, Scorpion, Goat, Hawk } from './travel.js';
+import { createBoss } from './boss.js';
 import { hasEgg } from './secrets.js';
 import { spriteSize } from './pixelArt.js';
 import { HAY_BALE, LILYPAD } from './sprites.js';
@@ -125,6 +126,10 @@ export function createLevel(index = 0) {
   const goats = (data.goats ?? []).map(([x]) => new Goat(x));
   const hawks = (data.hawks ?? []).map(([x, y, span]) => new Hawk(x, y, span));
 
+  // At most one boss per level; a named-object spec because boss tuning is
+  // heterogeneous (positional tuples are for forty identical rats).
+  const boss = data.boss ? createBoss(data.boss) : null;
+
   const ponds = (data.ponds ?? []).map(([x, endX]) => ({ x, width: endX - x }));
 
   const spawn = data.spawn
@@ -183,7 +188,7 @@ export function createLevel(index = 0) {
     pigs, bees, moles, crows, bounces, beams,
     rats, pigeons, taxis, hydrants, geysers,
     cats, drones, dumpsters, cranes, traffic,
-    snakes, scorpions, goats, hawks,
+    snakes, scorpions, goats, hawks, boss,
     buildings, animals, goal,
     clouds: scatterClouds(data.width),
   };
