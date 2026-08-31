@@ -25,7 +25,7 @@ export function isInsideButton(mx, my) {
   return mx >= b.x && mx <= b.x + b.width && my >= b.y && my <= b.y + b.height;
 }
 
-/** Title wordmark -- tap this on a phone to type IDDQD. */
+/** Title wordmark -- tap this on a phone to type a cheat. */
 export function isInsideTitle(mx, my) {
   return mx >= 24 && mx <= GAME_WIDTH - 24 && my >= 40 && my <= 115;
 }

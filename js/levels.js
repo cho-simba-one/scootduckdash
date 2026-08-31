@@ -702,3 +702,4 @@ export const LEVELS = [
 ];
 
 export const LEVEL_COUNT = LEVELS.length;
+export const STAGE_NAMES = LEVELS.map((l) => l.name);

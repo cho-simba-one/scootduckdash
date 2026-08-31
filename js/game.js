@@ -8,20 +8,22 @@ import { Input } from './input.js';
 import { Player, overlaps } from './player.js';
 import { Pickup } from './pickups.js';
 import { Camera } from './camera.js';
-import { createLevel, LEVEL_COUNT } from './level.js';
+import { createLevel, LEVEL_COUNT, STAGE_NAMES } from './level.js';
 import { markEgg, consumeLuckyRun, eggCount, allEggsFound } from './secrets.js';
 import {
   renderSky, renderBackground, renderTerrain, renderGoal, renderThemeOverlay,
 } from './background.js';
 import * as titleScreen from './titleScreen.js';
 import { Music } from './music.js';
-import { isGod, onGodChange, requestCheatKeyboard } from './cheats.js';
+import { isGod, isWarp, onGodChange, onWarpChange, requestCheatKeyboard } from './cheats.js';
 
 const HUD_HEARTS = { x: 8, y: 6, width: 86, height: 28 };
 
 const RESTART_BUTTON = { x: GAME_WIDTH / 2 - 90, y: 160, width: 180, height: 40 };
 const MUTE_BUTTON = { x: GAME_WIDTH - 34, y: 8, width: 26, height: 22 };
 const LEVEL_START_BUTTON = { x: GAME_WIDTH / 2 - 70, y: GAME_HEIGHT / 2 + 40, width: 140, height: 36 };
+const WARP_START_BUTTON = { x: GAME_WIDTH / 2 - 70, y: 214, width: 140, height: 36 };
+const WARP_LIST = { x: 24, y: 36, width: GAME_WIDTH - 48, rowH: 22, rows: 6 };
 // Longer than the intro so the clear fanfare gets to finish before the next
 // level's track kicks in -- cutting your own victory music off feels cheap.
 const LEVEL_CLEAR_MS = 3200;
@@ -49,6 +51,13 @@ export class Game {
     this.introHover = false;
     this.shotsThisLevel = 0;
     this.ignoreShoot = false;
+    this.warpIndex = 0;
+    this.warpScroll = 0;
+    this.warpHoverRow = -1;
+    this.warpUp = false;
+    this.warpDown = false;
+    this.warpHold = 0;
+    this.pointer = false;
     onGodChange((on) => {
       if (!on || !this.player) return;
       this.player.dead = false;
@@ -57,6 +66,15 @@ export class Game {
         this.state = STATE.PLAYING;
         Music.start();
       }
+    });
+    onWarpChange((on) => {
+      if (!on) return;
+      if (this.state === STATE.TITLE || !this.player) return;
+      // Drop back to the current intro so the picker is on screen now,
+      // not only after the next clear.
+      this.warpIndex = this.levelIndex;
+      this.ensureWarpVisible();
+      this.loadLevel(this.levelIndex, this.player.hearts);
     });
   }
 
@@ -78,11 +96,41 @@ export class Game {
     this.shotsThisLevel = 0;
     this.ignoreShoot = false;
     this.state = STATE.INTRO;
+    this.warpIndex = index;
+    this.ensureWarpVisible();
     Music.setLevel(index);       // each level gets its own track
     Music.restoreMusicLevel();   // undo any ducking from the clear fanfare
     if (consumeLuckyRun()) {
       this.level.pickups.push(new Pickup(80, GROUND_Y - 54, 'heart'));
     }
+  }
+
+  ensureWarpVisible() {
+    const { rows } = WARP_LIST;
+    if (this.warpIndex < this.warpScroll) this.warpScroll = this.warpIndex;
+    if (this.warpIndex >= this.warpScroll + rows) {
+      this.warpScroll = this.warpIndex - rows + 1;
+    }
+    const maxScroll = Math.max(0, STAGE_NAMES.length - rows);
+    if (this.warpScroll > maxScroll) this.warpScroll = maxScroll;
+    if (this.warpScroll < 0) this.warpScroll = 0;
+  }
+
+  warpTo(index) {
+    const count = STAGE_NAMES.length;
+    const next = ((index % count) + count) % count;
+    if (next === this.levelIndex && this.state === STATE.INTRO) {
+      this.warpIndex = next;
+      this.ensureWarpVisible();
+      return;
+    }
+    const hearts = this.player ? this.player.hearts : PLAYER_MAX_HEARTS;
+    this.loadLevel(next, hearts);
+    Music.start();
+  }
+
+  startButton() {
+    return isWarp() && this.state === STATE.INTRO ? WARP_START_BUTTON : LEVEL_START_BUTTON;
   }
 
   beginLevel() {
@@ -113,8 +161,20 @@ export class Game {
   }
 
   handleMouseMove(mx, my) {
-    if (this.state === STATE.TITLE) titleScreen.setHover(mx, my);
-    if (this.state === STATE.INTRO) this.introHover = insideRect(mx, my, LEVEL_START_BUTTON);
+    this.pointer = false;
+    if (this.state === STATE.TITLE) {
+      this.pointer = titleScreen.setHover(mx, my) || titleScreen.isInsideTitle(mx, my);
+      return;
+    }
+    if (this.state === STATE.INTRO) {
+      this.introHover = insideRect(mx, my, this.startButton());
+      this.warpHoverRow = (isWarp() && !this.introHover) ? warpRowAt(my, this.warpScroll) : -1;
+      this.pointer = this.introHover || this.warpHoverRow >= 0 || (isWarp() && !!warpCaretAt(mx, my));
+      return;
+    }
+    if (this.state === STATE.WIN || this.state === STATE.GAMEOVER) {
+      this.pointer = insideRect(mx, my, RESTART_BUTTON);
+    }
   }
 
   handleClick(mx, my) {
@@ -130,7 +190,27 @@ export class Game {
       titleScreen.tapDuck();
       return;
     }
-    if (this.state === STATE.INTRO && insideRect(mx, my, LEVEL_START_BUTTON)) {
+    if (this.state === STATE.INTRO && isWarp()) {
+      if (insideRect(mx, my, WARP_START_BUTTON)) {
+        this.beginLevel();
+        return;
+      }
+      const caret = warpCaretAt(mx, my);
+      if (caret === 'up') {
+        this.warpTo(this.levelIndex - WARP_LIST.rows);
+        return;
+      }
+      if (caret === 'down') {
+        this.warpTo(this.levelIndex + WARP_LIST.rows);
+        return;
+      }
+      const row = warpRowAt(my, this.warpScroll);
+      if (row >= 0) {
+        this.warpTo(row);
+        return;
+      }
+    }
+    if (this.state === STATE.INTRO && insideRect(mx, my, this.startButton())) {
       this.beginLevel();
       return;
     }
@@ -151,6 +231,41 @@ export class Game {
     // Intro waits on START (click/tap or Space). Level-clear is still timed
     // so the fanfare can finish.
     if (this.state === STATE.INTRO) {
+      if (isWarp()) {
+        const up = Input.up();
+        const down = Input.down();
+        if (up && !down) {
+          if (!this.warpUp) {
+            this.warpTo(this.levelIndex - 1);
+            this.warpHold = 0;
+          } else {
+            this.warpHold += dtMs;
+            if (this.warpHold > 280) {
+              this.warpTo(this.levelIndex - 1);
+              this.warpHold = 90;
+            }
+          }
+        } else if (down && !up) {
+          if (!this.warpDown) {
+            this.warpTo(this.levelIndex + 1);
+            this.warpHold = 0;
+          } else {
+            this.warpHold += dtMs;
+            if (this.warpHold > 280) {
+              this.warpTo(this.levelIndex + 1);
+              this.warpHold = 90;
+            }
+          }
+        } else {
+          this.warpHold = 0;
+        }
+        this.warpUp = up;
+        this.warpDown = down;
+      } else {
+        this.warpUp = false;
+        this.warpDown = false;
+        this.warpHold = 0;
+      }
       if (Input.shoot()) this.beginLevel();
       return;
     }
@@ -483,7 +598,9 @@ export class Game {
     renderHud(ctx, this.player, level);
 
     if (this.state === STATE.INTRO) {
-      if (level.cityGate) {
+      if (isWarp()) {
+        renderWarpPanel(ctx, this, this.introHover);
+      } else if (level.cityGate) {
         renderCard(ctx, 'THE CITY', level.name, level.skill || '', { button: 'START', hover: this.introHover });
       } else {
         renderCard(ctx, level.name, level.skill || level.subtitle, '', { button: 'START', hover: this.introHover });
@@ -523,6 +640,73 @@ function hitFoe(player, playerBox, shots, foe, nowMs, sfx) {
       Music.play(sfx);
     }
   }
+}
+
+function warpRowAt(my, scroll) {
+  const { y, rowH, rows } = WARP_LIST;
+  if (my < y || my >= y + rows * rowH) return -1;
+  const i = scroll + Math.floor((my - y) / rowH);
+  if (i < 0 || i >= STAGE_NAMES.length) return -1;
+  return i;
+}
+
+function warpCaretAt(mx, my) {
+  if (insideRect(mx, my, HUD_HEARTS) || insideRect(mx, my, MUTE_BUTTON)) return null;
+  const { y, rowH, rows } = WARP_LIST;
+  if (my >= 18 && my < y) return 'up';
+  if (my >= y + rows * rowH && my < WARP_START_BUTTON.y - 4) return 'down';
+  return null;
+}
+
+function renderWarpPanel(ctx, game, startHover) {
+  ctx.fillStyle = 'rgba(0,0,0,0.72)';
+  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffd23f';
+  ctx.font = "14px 'Press Start 2P', monospace";
+  ctx.fillText('WARP', GAME_WIDTH / 2, 24);
+
+  const { x, y, width, rowH, rows } = WARP_LIST;
+  for (let i = 0; i < rows; i++) {
+    const idx = game.warpScroll + i;
+    if (idx >= STAGE_NAMES.length) break;
+    const rowY = y + i * rowH;
+    const selected = idx === game.levelIndex;
+    const hover = idx === game.warpHoverRow;
+    if (selected) {
+      ctx.fillStyle = '#ffd23f';
+      ctx.fillRect(x, rowY, width, rowH - 2);
+      ctx.fillStyle = '#1a1a1a';
+    } else if (hover) {
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.fillRect(x, rowY, width, rowH - 2);
+      ctx.fillStyle = '#ffffff';
+    } else {
+      ctx.fillStyle = '#cdeeff';
+    }
+    ctx.font = "8px 'Press Start 2P', monospace";
+    ctx.fillText(STAGE_NAMES[idx], GAME_WIDTH / 2, rowY + 15);
+  }
+
+  ctx.fillStyle = '#8ecae6';
+  ctx.font = "8px 'Press Start 2P', monospace";
+  if (game.warpScroll > 0) ctx.fillText('^', GAME_WIDTH / 2, y - 2);
+  if (game.warpScroll + rows < STAGE_NAMES.length) {
+    ctx.fillText('v', GAME_WIDTH / 2, y + rows * rowH + 8);
+  }
+  ctx.fillText('ARROWS OR TAP  -  SPACE STARTS', GAME_WIDTH / 2, 204);
+
+  const b = WARP_START_BUTTON;
+  ctx.fillStyle = startHover ? '#ffe873' : '#ffd23f';
+  ctx.fillRect(b.x, b.y, b.width, b.height);
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(b.x, b.y, b.width, b.height);
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = "14px 'Press Start 2P', monospace";
+  ctx.fillText('START', GAME_WIDTH / 2, b.y + 24);
+  ctx.textAlign = 'left';
 }
 
 /** Centered banner used for both the level intro and the clear screen. */

@@ -3,7 +3,7 @@
 // assembled, so adding a level never means touching code -- just data.
 
 import { GAME_HEIGHT, GROUND_Y } from './constants.js';
-import { LEVELS, LEVEL_COUNT } from './levels.js';
+import { LEVELS, LEVEL_COUNT, STAGE_NAMES } from './levels.js';
 import { Frog } from './enemy.js';
 import { Goose, Cart } from './hazards.js';
 import { Pickup } from './pickups.js';
@@ -16,7 +16,7 @@ import { HAY_BALE, LILYPAD } from './sprites.js';
 const hayBaleSize = spriteSize(HAY_BALE);
 const lilyPadSize = spriteSize(LILYPAD);
 
-export { LEVEL_COUNT };
+export { LEVEL_COUNT, STAGE_NAMES };
 
 function groundStrip(x, width, y = GROUND_Y) {
   return { x, y, width, height: GAME_HEIGHT - y };

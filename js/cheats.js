@@ -1,37 +1,57 @@
 // Typed cheats. Kept out of input.js because a sequence buffer is not
-// "is this key down" -- and everything that cares about god mode can
-// import isGod() without knowing how it got turned on.
+// "is this key down" -- and everything that cares about a cheat can
+// import the flag without knowing how it got turned on.
 //
 // Desktop: letter keys anywhere (capture-phase, so the canvas never has
 // to be "focused"). Phone: tap the title (or the HUD hearts) to pop the
 // OS keyboard into a hidden field, then type the same letters.
+//
+//   IDDQD -- god mode (gold hearts, never stays down)
+//   IDKFA -- warp picker on every stage intro
 
-const IDDQD = 'iddqd';
+const GOD_CODE = 'iddqd';
+const WARP_CODE = 'idkfa';
+const CHEAT_LETTERS = 'idqkfa';
+const BUFFER_LEN = 5;
+
+const FROM_CODE = {
+  KeyI: 'i', KeyD: 'd', KeyQ: 'q', KeyK: 'k', KeyF: 'f', KeyA: 'a',
+};
+
 let buffer = '';
 let god = false;
-const listeners = [];
+let warp = false;
+const godListeners = [];
+const warpListeners = [];
 
 function letterFromEvent(e) {
   if (e.key && e.key.length === 1 && /[a-z]/i.test(e.key)) {
     return e.key.toLowerCase();
   }
   // Some WebViews report blank/Unidentified for e.key. Physical code still works.
-  const fromCode = { KeyI: 'i', KeyD: 'd', KeyQ: 'q' };
-  return fromCode[e.code] || '';
+  return FROM_CODE[e.code] || '';
 }
 
 function feed(ch) {
   if (!ch) return;
-  if (!'idq'.includes(ch)) {
+  if (!CHEAT_LETTERS.includes(ch)) {
     buffer = '';
     return;
   }
-  buffer = (buffer + ch).slice(-IDDQD.length);
-  if (buffer !== IDDQD) return;
-  buffer = '';
-  god = !god;
-  for (const fn of listeners) fn(god);
-  blurCheatEntry();
+  buffer = (buffer + ch).slice(-BUFFER_LEN);
+  if (buffer === GOD_CODE) {
+    buffer = '';
+    god = !god;
+    for (const fn of godListeners) fn(god);
+    blurCheatEntry();
+    return;
+  }
+  if (buffer === WARP_CODE) {
+    buffer = '';
+    warp = !warp;
+    for (const fn of warpListeners) fn(warp);
+    blurCheatEntry();
+  }
 }
 
 function onKeyDown(e) {
@@ -76,7 +96,16 @@ export function isGod() {
   return god;
 }
 
+export function isWarp() {
+  return warp;
+}
+
 /** Called when IDDQD flips, so a GAME OVER can stand the duck back up. */
 export function onGodChange(fn) {
-  listeners.push(fn);
+  godListeners.push(fn);
+}
+
+/** Called when IDKFA flips, so the current intro can grow a picker. */
+export function onWarpChange(fn) {
+  warpListeners.push(fn);
 }

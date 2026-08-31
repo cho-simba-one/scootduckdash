@@ -31,7 +31,7 @@ function canvasPosFromEvent(evt) {
 canvas.addEventListener('mousemove', (evt) => {
   const { x, y } = canvasPosFromEvent(evt);
   game.handleMouseMove(x, y);
-  canvas.style.cursor = isInsideButton(x, y) ? 'pointer' : 'default';
+  canvas.style.cursor = game.pointer || isInsideButton(x, y) ? 'pointer' : 'default';
 });
 
 canvas.addEventListener('click', (evt) => {
