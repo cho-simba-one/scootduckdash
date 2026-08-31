@@ -1406,7 +1406,10 @@ export const LEVELS = [
     spawn: [2200, 200],
     ground: [[0, 600], [1000, 500], [1900, 800], [3100, 500], [3900, 500]],
     ledges: [[80, 2300, 88], [80, 1400, 18]],
-    hay: [[2080, 158], [2200, 158], [2320, 158]],
+    // The three arena bales (negative y) are dodge perches for the boss
+    // fight: high enough to clear his head-down charge, low enough to
+    // reach from the ledge inside the jump budget.
+    hay: [[2080, 158], [2200, 158], [2320, 158], [420, -40], [770, -56], [1120, -40]],
     ponds: [[600, 1000], [1500, 1900], [2700, 3100], [3600, 3900]],
     lilies: [
       [660, 195], [760, 190], [860, 195], [940, 195],
@@ -1414,22 +1417,23 @@ export const LEVELS = [
       [2760, 195], [2860, 190], [2960, 195], [3040, 195],
       [3660, 195], [3760, 190], [3840, 195],
     ],
-    frogs: [[760, 190], [1660, 190], [2860, 190]],
+    // Route deliberately quiet -- the level's difficulty IS the Foreman.
+    frogs: [],
     geese: [],
     carts: [[3300, 195, 200, 'h']],
-    rats: [[300, 88], [1100, 88]],
-    pigs: [[4000]],
-    bees: [[500, 40, 240], [1800, 30, 200]],
-    moles: [[240], [2000]],
-    crows: [[3200, 40, 260]],
+    rats: [],
+    pigs: [],
+    bees: [],
+    moles: [],
+    crows: [],
     bounces: [[2100, 175]],
     pickups: [[140, -20, 'egg']],
     buildings: [],
     animals: [],
     goal: [140, -72],
     // THE FOREMAN guards the pie safe on the top ledge (y=18 spans 80-1480).
-    // The goal stays locked until he clocks out.
-    boss: { type: 'work', x: 820, floorY: 18, minX: 200, maxX: 1420, hp: 3 },
+    // The goal stays locked until he clocks out. Whip-only, six hits.
+    boss: { type: 'work', x: 820, floorY: 18, minX: 200, maxX: 1420, hp: 6 },
     saves: [[2200, 200], [2300, 58], [1600, 58], [200, -12]],
   },
 ];

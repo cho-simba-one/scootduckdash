@@ -558,20 +558,49 @@ export class Game {
       if (box && overlaps(playerBox, box)) player.takeDamage(nowMs, jet.x);
     }
 
-    // The boss is an entity, not a game state -- hitFoe treats it like any
-    // foe (HP hides behind stomp()), and its thrown hazards are checked
-    // exactly like the jets above. Sfx flags are set by the boss and
-    // consumed here, matching the frog-tongue precedent.
+    // The boss is an entity, not a game state -- but he does NOT go through
+    // hitFoe, because against a boss the hit-source matters: only the whip
+    // lands, stomps clank off the hard hat, and propeller shots get eaten
+    // by the clipboard. Sfx flags are set by the boss and consumed here,
+    // matching the frog-tongue precedent.
     if (level.boss) {
       const boss = level.boss;
       boss.update(dtMs, nowMs, playerBox);
-      hitFoe(player, playerBox, this.projectiles, boss, nowMs, 'boss');
+      const bossBox = boss.getHitbox();
+      if (bossBox) {
+        if (player.isWhipping() && overlaps(player.getWhipHitbox(), bossBox)) {
+          if (boss.whipHit()) Music.play('boss');
+        } else if (overlaps(playerBox, bossBox)) {
+          const stompDepth = playerBox.y + playerBox.height - bossBox.y;
+          if (player.vy > 0 && stompDepth < bossBox.height * 0.5) {
+            player.stompBounce(); // hard hat: safe pogo, zero damage
+            boss.deflect();
+            Music.play('bounce');
+          } else {
+            player.takeDamage(nowMs, boss.x);
+          }
+        }
+        for (const shot of this.projectiles) {
+          if (!shot.dead && overlaps(shot.getHitbox(), bossBox)) {
+            shot.dead = true; // filed by the clipboard, no damage
+            boss.deflect();
+          }
+        }
+      }
       for (const box of boss.getHazardBoxes()) {
         if (overlaps(playerBox, box)) player.takeDamage(nowMs, boss.x);
       }
       if (boss.throwPending) {
         boss.throwPending = false;
         Music.play('bossThrow');
+      }
+      if (boss.slamPending) {
+        boss.slamPending = false;
+        Music.play('bossSlam');
+      }
+      if (boss.blockPending) {
+        boss.blockPending = false;
+        Music.play('bossBlock');
       }
       if (boss.downPending) {
         boss.downPending = false;

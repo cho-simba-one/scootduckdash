@@ -242,4 +242,24 @@ export const SFX = {
     noise(ctx, dest, { dur: 0.06, type: 'bandpass', freq: 2200, sweepTo: 700, q: 2.5, gain: 0.08 });
     tone(ctx, dest, { from: 180, to: 90, dur: 0.05, type: 'square', gain: 0.10, delay: 0.05 });
   },
+
+  /** Attack deflected off the hard hat or clipboard -- bright, high, metallic
+   * clank. Deliberately the inverse register of `boss`'s low grunt-thud, so a
+   * wasted propeller shot or stomp reads by ear as "wrong tool" rather than
+   * "hit landed". */
+  bossBlock(ctx, dest) {
+    tone(ctx, dest, { from: 1200, to: 900, dur: 0.06, type: 'square', gain: 0.09 });
+    tone(ctx, dest, { from: 1800, to: 1300, dur: 0.05, type: 'triangle', gain: 0.06, delay: 0.01 });
+    noise(ctx, dest, { dur: 0.05, type: 'bandpass', freq: 4000, q: 6, gain: 0.07, delay: 0.005 });
+  },
+
+  /** Foreman ground-pounds the floor -- twin low tones for the impact plus a
+   * lowpass noise rumble tail. The heaviest, lowest sound in the set on
+   * purpose, so it reads as "danger, shockwave incoming" before the wave
+   * even appears on screen. */
+  bossSlam(ctx, dest) {
+    tone(ctx, dest, { from: 70, to: 30, dur: 0.32, type: 'sine', gain: 0.12 });
+    tone(ctx, dest, { from: 45, to: 20, dur: 0.38, type: 'square', gain: 0.08, delay: 0.01 });
+    noise(ctx, dest, { dur: 0.4, type: 'lowpass', freq: 220, sweepTo: 40, gain: 0.1 });
+  },
 };

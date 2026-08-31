@@ -14,6 +14,14 @@ HP bar) — the bosses live at 40/60/70/90, not 100.
 | Level | World | Boss | Screen title | Status |
 |---|---|---|---|---|
 | 40 | The Mill | The Work Boss | THE FOREMAN — Nobody Clocks Out Early | **SHIPPED** (`js/boss.js`, `type: 'work'`) |
+
+Foreman v2 (Captain's tuning, settled): bigger (66x84), **whip-only** — stomps
+clank off the hard hat (safe pogo), propeller shots die on the clipboard —
+6 HP, vulnerable only while dizzy (post-wall-slam) or recovering (post-pound).
+Attacks: low-profile charge (dodge on the arena bales), ground pound with
+floor shockwaves, aimed time-card volleys. Everything hastens as HP drops.
+Note for bosses 2-4: bosses do NOT go through `hitFoe` — the hit-source
+matters, so game.js runs a dedicated boss combat block.
 | 60 | Carnival | Mrs. Scooter Duck | MRS. SCOOTER DUCK — Ring Toss for Two | Planned |
 | 70 | Alpine Town | Baby Scooter Duck | BABY SCOOTER DUCK — Not Done Being Upset | Planned |
 | 90 | The Manor | Giant Scooter Duck | GIANT SCOOTER DUCK — His Own Worst Rival | Planned |
