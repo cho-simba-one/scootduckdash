@@ -246,6 +246,34 @@ export const DRONE = [
   '..sss..',
 ];
 
+export const SNAKE = [
+  '...ll.',
+  '.llGGl',
+  'llooll',
+  '.l..l.',
+];
+
+export const SCORPION = [
+  'q...q.',
+  'qqkqqq',
+  '.qkkq.',
+  'q.q.q.',
+];
+
+export const GOAT = [
+  'J..n..',
+  'JJnnn.',
+  '.nnnnJ',
+  '.n..n.',
+];
+
+export const HAWK = [
+  '..HH.HH.',
+  '.HHnnHHo',
+  'HHwwHHH.',
+  '.HH.HH..',
+];
+
 export const FARMHOUSE = [
   '............eeeeeeeeeeeeee............',
   '..........eeeeeeeeeeeeeeeeee..........',

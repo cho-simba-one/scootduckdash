@@ -296,7 +296,11 @@ export class Game {
     for (const taxi of level.taxis) taxi.carry(player);
     for (const crane of level.cranes) crane.carry(player);
 
-    player.update(dtMs, level.solids, nowMs);
+    player.update(dtMs, level.solids, nowMs, level.allowWhip);
+    if (player.whipStarted) {
+      player.whipStarted = false;
+      Music.play('whip');
+    }
 
     if (player.groundSolid && player.groundSolid.belt) {
       player.x += player.groundSolid.belt * 1.55 * (dtMs / 16.6667);
@@ -365,7 +369,11 @@ export class Game {
       frog.update(dtMs, nowMs, playerBox);
 
       const frogBox = frog.getHitbox();
-      if (frogBox && overlaps(playerBox, frogBox)) {
+      if (frogBox && player.isWhipping() && overlaps(player.getWhipHitbox(), frogBox)) {
+        frog.stomp();
+        Music.play('whip');
+        Music.play('frog');
+      } else if (frogBox && overlaps(playerBox, frogBox)) {
         const stompDepth = playerBox.y + playerBox.height - frogBox.y;
         const isStomp = player.vy > 0 && stompDepth < frogBox.height * 0.6;
         if (isStomp) {
@@ -410,7 +418,11 @@ export class Game {
       const gooseBox = goose.getHitbox();
       if (!gooseBox) continue;
 
-      if (overlaps(playerBox, gooseBox)) {
+      if (player.isWhipping() && overlaps(player.getWhipHitbox(), gooseBox)) {
+        goose.stomp();
+        Music.play('whip');
+        Music.play('goose');
+      } else if (overlaps(playerBox, gooseBox)) {
         const stompDepth = playerBox.y + playerBox.height - gooseBox.y;
         const isStomp = player.vy > 0 && stompDepth < gooseBox.height * 0.7;
         if (isStomp) {
@@ -468,6 +480,30 @@ export class Game {
       hitFoe(player, playerBox, this.projectiles, pigeon, nowMs, 'pigeon');
     }
     level.pigeons = level.pigeons.filter((p) => !p.dead);
+
+    for (const snake of level.snakes) {
+      snake.update(dtMs);
+      hitFoe(player, playerBox, this.projectiles, snake, nowMs, 'snake');
+    }
+    level.snakes = level.snakes.filter((s) => !s.dead);
+
+    for (const scorp of level.scorpions) {
+      scorp.update(dtMs);
+      hitFoe(player, playerBox, this.projectiles, scorp, nowMs, 'scorpion');
+    }
+    level.scorpions = level.scorpions.filter((s) => !s.dead);
+
+    for (const goat of level.goats) {
+      goat.update(dtMs);
+      hitFoe(player, playerBox, this.projectiles, goat, nowMs, 'goat');
+    }
+    level.goats = level.goats.filter((g) => !g.dead);
+
+    for (const hawk of level.hawks) {
+      hawk.update(dtMs);
+      hitFoe(player, playerBox, this.projectiles, hawk, nowMs, 'hawk');
+    }
+    level.hawks = level.hawks.filter((h) => !h.dead);
 
     for (const cat of level.cats) {
       cat.update(dtMs);
@@ -587,6 +623,10 @@ export class Game {
     for (const crow of level.crows) crow.render(ctx, this.camera);
     for (const rat of level.rats) rat.render(ctx, this.camera);
     for (const pigeon of level.pigeons) pigeon.render(ctx, this.camera);
+    for (const snake of level.snakes) snake.render(ctx, this.camera);
+    for (const scorp of level.scorpions) scorp.render(ctx, this.camera);
+    for (const goat of level.goats) goat.render(ctx, this.camera);
+    for (const hawk of level.hawks) hawk.render(ctx, this.camera);
     for (const cat of level.cats) cat.render(ctx, this.camera);
     for (const drone of level.drones) drone.render(ctx, this.camera);
     for (const dump of level.dumpsters) dump.render(ctx, this.camera);
@@ -612,7 +652,9 @@ export class Game {
         ctx,
         allEggsFound() ? 'EGG HUNTER!' : 'YOU WIN!',
         '#2a9d3f',
-        'Scoot rings the new bell all the way home.',
+        level.world === 'travel'
+          ? 'The clapper snaps back in. The bell dings. Grandma Goose hears it from here.'
+          : 'Scoot rings the new bell all the way home.',
       );
     }
     if (this.state === STATE.GAMEOVER) renderEndScreen(ctx, 'GAME OVER', '#e63946');
@@ -624,6 +666,12 @@ export class Game {
 function hitFoe(player, playerBox, shots, foe, nowMs, sfx) {
   const box = foe.getHitbox();
   if (!box) return;
+  if (player.isWhipping() && overlaps(player.getWhipHitbox(), box)) {
+    foe.stomp();
+    Music.play('whip');
+    Music.play(sfx);
+    return;
+  }
   if (overlaps(playerBox, box)) {
     const stompDepth = playerBox.y + playerBox.height - box.y;
     const isStomp = player.vy > 0 && stompDepth < box.height * 0.65;
@@ -722,6 +770,11 @@ function renderIntro(ctx, level, hover) {
     ctx.fillStyle = '#ff79c6';
     ctx.font = "8px 'Press Start 2P', monospace";
     ctx.fillText('THE CITY', GAME_WIDTH / 2, y);
+    y += 16;
+  } else if (level.travelGate) {
+    ctx.fillStyle = '#f4c48a';
+    ctx.font = "8px 'Press Start 2P', monospace";
+    ctx.fillText('THE WORLD', GAME_WIDTH / 2, y);
     y += 16;
   }
 

@@ -17,6 +17,14 @@ export const PLAYER_JUMP_VELOCITY = -9.6;
 export const PLAYER_STOMP_BOUNCE = -6.5;
 export const PLAYER_PAD_BOUNCE = -11.4; // flower pads -- enough extra height to reach secret eggs
 
+// Tail-whip (travel world and later). One spin per jump; farm/city never arm it.
+export const WHIP_DURATION_MS = 280;
+export const WHIP_POP = -2.4;
+export const WHIP_SPEED_BONUS = 1.05;
+export const WHIP_MAX_SPEED = 4.45;
+export const WHIP_GRAVITY_MUL = 0.58;
+export const WHIP_REACH = 12;
+
 export const PLAYER_WIDTH = 26;
 export const PLAYER_HEIGHT = 30;
 export const PLAYER_DUCK_HEIGHT = 20;
@@ -84,6 +92,8 @@ export const PALETTE = {
   d: '#2d6a4f', // dumpster green
   i: '#5c6b73', // drone steel
   z: '#ff4fd0', // neon pink
+  q: '#c45c18', // scorpion
+  J: '#efe6d2', // goat cream
 };
 
 // NOTE: every palette key MUST be exactly one character -- sprite grids

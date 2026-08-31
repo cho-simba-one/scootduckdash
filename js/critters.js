@@ -239,13 +239,13 @@ export class Crow {
 
 /** Land on it falling to get a super-jump. Not a solid -- a trigger. */
 export class BouncePad {
-  constructor(x, y, city = false) {
+  constructor(x, y, world = 'farm') {
     const size = spriteSize(BOUNCE_FLOWER);
     this.width = size.width;
     this.height = size.height;
     this.x = x;
     this.y = y;
-    this.city = city;
+    this.world = world;
     this.squash = 0;
   }
 
@@ -267,7 +267,7 @@ export class BouncePad {
     ctx.save();
     ctx.translate(this.x - camera.x + this.width / 2, this.y + this.height);
     ctx.scale(1 + this.squash * 0.2, squish);
-    if (this.city) {
+    if (this.world === 'city' || this.world === 'travel') {
       ctx.fillStyle = '#111111';
       ctx.fillRect(-this.width / 2 - 1, -11, this.width + 2, 12);
       ctx.fillStyle = '#ffd23f';

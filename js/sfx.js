@@ -180,6 +180,30 @@ export const SFX = {
     tone(ctx, dest, { from: 140, to: 70, dur: 0.14, type: 'square', gain: 0.06 });
   },
 
+  whip(ctx, dest) {
+    noise(ctx, dest, { dur: 0.14, type: 'bandpass', freq: 900, sweepTo: 280, q: 1.4, gain: 0.1 });
+    tone(ctx, dest, { from: 280, to: 520, dur: 0.12, type: 'sawtooth', gain: 0.07 });
+  },
+
+  snake(ctx, dest) {
+    tone(ctx, dest, { from: 360, to: 140, dur: 0.16, type: 'square', gain: 0.08 });
+  },
+
+  scorpion(ctx, dest) {
+    tone(ctx, dest, { from: 200, to: 90, dur: 0.16, type: 'sawtooth', gain: 0.1 });
+    noise(ctx, dest, { dur: 0.1, freq: 400, sweepTo: 120, gain: 0.06 });
+  },
+
+  goat(ctx, dest) {
+    tone(ctx, dest, { from: 480, to: 260, dur: 0.14, type: 'triangle', gain: 0.1 });
+    tone(ctx, dest, { from: 240, to: 140, dur: 0.16, type: 'square', gain: 0.05, delay: 0.03 });
+  },
+
+  hawk(ctx, dest) {
+    tone(ctx, dest, { from: 720, to: 300, dur: 0.18, type: 'sawtooth', gain: 0.09 });
+    tone(ctx, dest, { from: 730, to: 310, dur: 0.18, type: 'sawtooth', gain: 0.05 });
+  },
+
   egg(ctx, dest) {
     const notes = [659.25, 783.99, 987.77, 1318.51];
     notes.forEach((freq, i) => {

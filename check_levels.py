@@ -21,6 +21,7 @@ HAY_W = 30
 CART_W = 60
 TAXI_W = 70
 SAFE_EDGE = 92
+WHIP_SAFE = 120
 MAX_JUMP_X = 115.6
 MAX_JUMP_H = 79.0
 GROUND_Y = 230
@@ -65,12 +66,17 @@ def parse_levels(text: str) -> list[dict]:
             "carts": _js_array(chunk, "carts") or [],
             "taxis": _js_array(chunk, "taxis") or [],
             "pickups": _js_array(chunk, "pickups") or [],
+            "whip": bool(re.search(r"whip:\s*true", chunk)),
         })
     return levels
 
 
 def lily_edges(cx):
     return cx - LILY_W / 2, cx + LILY_W / 2
+
+
+def edge_limit(lv):
+    return WHIP_SAFE if lv.get("whip") else SAFE_EDGE
 
 
 def check_level(lv: dict) -> list[str]:
@@ -88,10 +94,10 @@ def check_level(lv: dict) -> list[str]:
         pads = sorted(cx for cx, _y in lv["lilies"] if pond[0] < cx < pond[1])
         for cx, nx in zip(pads, pads[1:]):
             gap = (nx - LILY_W / 2) - (cx + LILY_W / 2)
-            if gap > SAFE_EDGE and not cart_covers(rides_h(lv), cx + LILY_W / 2, nx - LILY_W / 2):
+            if gap > edge_limit(lv) and not cart_covers(rides_h(lv), cx + LILY_W / 2, nx - LILY_W / 2):
                 fails.append(
                     f"{name}: lily {cx}->{nx} in pond {pond[0]}-{pond[1]} "
-                    f"edge gap {gap:.0f}px > {SAFE_EDGE} and no cart"
+                    f"edge gap {gap:.0f}px > {edge_limit(lv)} and no cart"
                 )
 
     for pond in lv["ponds"]:
@@ -162,19 +168,19 @@ def check_pond(name, a, b, lv) -> list[str]:
     # bridge any oversize pad gap, then last pad/cart -> far ground.
     if pads:
         first_l, _ = lily_edges(pads[0][0])
-        if first_l - a > SAFE_EDGE and not cart_covers(rides_h(lv), a, first_l):
+        if first_l - a > edge_limit(lv) and not cart_covers(rides_h(lv), a, first_l):
             fails.append(
                 f"{name}: pond {a}-{b} entry gap {first_l - a:.0f}px (need lily or cart)"
             )
         last_r = lily_edges(pads[-1][0])[1]
-        if b - last_r > SAFE_EDGE and not cart_covers(rides_h(lv), last_r, b):
+        if b - last_r > edge_limit(lv) and not cart_covers(rides_h(lv), last_r, b):
             fails.append(
                 f"{name}: pond {a}-{b} exit gap {b - last_r:.0f}px (need lily or cart)"
             )
     for x, y, rng, width in hcarts:
-        on_gap_ok = any(lily_edges(cx)[1] + SAFE_EDGE >= x for cx, _cy in pads) or x - a <= SAFE_EDGE
+        on_gap_ok = any(lily_edges(cx)[1] + edge_limit(lv) >= x for cx, _cy in pads) or x - a <= edge_limit(lv)
         off_right = x + rng + width
-        off_gap_ok = any(lily_edges(cx)[0] - SAFE_EDGE <= off_right for cx, _cy in pads) or b - off_right <= SAFE_EDGE
+        off_gap_ok = any(lily_edges(cx)[0] - edge_limit(lv) <= off_right for cx, _cy in pads) or b - off_right <= edge_limit(lv)
         if not on_gap_ok:
             fails.append(f"{name}: cannot hop ON cart at {x} in pond {a}-{b}")
         if not off_gap_ok:
@@ -184,8 +190,8 @@ def check_pond(name, a, b, lv) -> list[str]:
 
 def main():
     levels = parse_levels(LEVELS_JS.read_text(encoding="utf-8"))
-    if len(levels) < 20:
-        raise SystemExit(f"expected at least 20 levels, parsed {len(levels)}")
+    if len(levels) < 30:
+        raise SystemExit(f"expected at least 30 levels, parsed {len(levels)}")
     fails = []
     for lv in levels:
         fails.extend(check_level(lv))

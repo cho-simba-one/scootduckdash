@@ -5,7 +5,7 @@
 const EGG_KEY = 'duckDashEggs';
 
 // Internal only -- the HUD never prints this. Bump when a world adds eggs.
-export const EGG_TOTAL = 15;
+export const EGG_TOTAL = 25;
 
 export function foundEggs() {
   try {

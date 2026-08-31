@@ -3,6 +3,8 @@ import {
   PLAYER_MAX_SPEED, PLAYER_DUCK_MAX_SPEED, PLAYER_JUMP_VELOCITY,
   PLAYER_STOMP_BOUNCE, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_DUCK_HEIGHT,
   PLAYER_MAX_HEARTS, PLAYER_INVINCIBLE_MS, PROJECTILE_COOLDOWN_MS,
+  WHIP_DURATION_MS, WHIP_POP, WHIP_SPEED_BONUS, WHIP_MAX_SPEED,
+  WHIP_GRAVITY_MUL, WHIP_REACH,
 } from './constants.js';
 import { DUCK_IDLE, DUCK_RUN1, DUCK_RUN2, DUCK_JUMP, DUCK_DUCK, withWhiteEye } from './sprites.js';
 import { isGod } from './cheats.js';
@@ -26,6 +28,9 @@ export class Player {
     this.animTimer = 0;
     this.animFrame = 0;
     this.dead = false;
+    this.whipTimer = 0;
+    this.whipUsed = false;
+    this.whipStarted = false;
   }
 
   get width() {
@@ -38,6 +43,20 @@ export class Player {
 
   getHitbox() {
     return { x: this.x, y: this.y, width: this.width, height: this.height };
+  }
+
+  isWhipping() {
+    return this.whipTimer > 0;
+  }
+
+  getWhipHitbox() {
+    const b = this.getHitbox();
+    return {
+      x: b.x - WHIP_REACH,
+      y: b.y - WHIP_REACH,
+      width: b.width + WHIP_REACH * 2,
+      height: b.height + WHIP_REACH * 2,
+    };
   }
 
   isInvincible(nowMs) {
@@ -72,16 +91,28 @@ export class Player {
     this.vy = PLAYER_STOMP_BOUNCE;
   }
 
-  update(dtMs, solids, nowMs) {
+  update(dtMs, solids, nowMs, allowWhip = false) {
     const dt = dtMs / 16.6667; // normalize to "60fps units" so tuning numbers stay sane
 
     // Ducking can only start/stop while grounded -- classic Mario rule.
     if (this.grounded) {
       this.ducking = Input.down();
+      this.whipTimer = 0;
+      this.whipUsed = false;
+    } else if (allowWhip && !this.whipUsed && Input.down()) {
+      this.whipUsed = true;
+      this.whipTimer = WHIP_DURATION_MS;
+      this.whipStarted = true;
+      this.vy += WHIP_POP;
+      this.vx += this.facing * WHIP_SPEED_BONUS;
     }
 
+    if (this.whipTimer > 0) this.whipTimer -= dtMs;
+
     // --- Horizontal movement -------------------------------------------------
-    const maxSpeed = this.ducking ? PLAYER_DUCK_MAX_SPEED : PLAYER_MAX_SPEED;
+    const maxSpeed = this.whipTimer > 0
+      ? WHIP_MAX_SPEED
+      : (this.ducking ? PLAYER_DUCK_MAX_SPEED : PLAYER_MAX_SPEED);
     let moveInput = 0;
     if (!this.ducking) {
       if (Input.left()) moveInput -= 1;
@@ -104,7 +135,8 @@ export class Player {
     }
 
     // --- Gravity -----------------------------------------------------------
-    this.vy = Math.min(this.vy + GRAVITY * dt, MAX_FALL_SPEED);
+    const g = GRAVITY * (this.whipTimer > 0 ? WHIP_GRAVITY_MUL : 1);
+    this.vy = Math.min(this.vy + g * dt, MAX_FALL_SPEED);
 
     // --- Move + collide, one axis at a time ---------------------------------
     this.x += this.vx * dt;
@@ -133,7 +165,23 @@ export class Player {
     const flicker = this.isInvincible(nowMs) && Math.floor(nowMs / 90) % 2 === 0;
     if (flicker) return;
     const grid = isGod() ? withWhiteEye(this.currentSprite()) : this.currentSprite();
-    drawSprite(ctx, grid, this.x - camera.x, this.y, { flip: this.facing < 0 });
+    const screenX = this.x - camera.x;
+    if (this.whipTimer > 0) {
+      const size = spriteSize(grid);
+      const spin = (1 - this.whipTimer / WHIP_DURATION_MS) * Math.PI * 2 * this.facing;
+      ctx.save();
+      ctx.translate(screenX + size.width / 2, this.y + size.height / 2);
+      ctx.rotate(spin);
+      drawSprite(ctx, grid, -size.width / 2, -size.height / 2, { flip: this.facing < 0 });
+      ctx.strokeStyle = 'rgba(255,210,63,0.7)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, size.width * 0.55, 0, Math.PI * 1.2);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
+    drawSprite(ctx, grid, screenX, this.y, { flip: this.facing < 0 });
   }
 }
 

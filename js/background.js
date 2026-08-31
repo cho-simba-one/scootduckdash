@@ -46,6 +46,8 @@ export function renderSky(ctx, theme = THEMES.day) {
 export function renderBackground(ctx, camera, level, nowMs) {
   if (level.world === 'city') {
     renderCitySkyline(ctx, camera, level, nowMs);
+  } else if (level.world === 'travel') {
+    renderTravelLandmarks(ctx, camera, level, nowMs);
   } else {
     for (const cloud of level.clouds) {
       drawSprite(ctx, CLOUD, parallaxX(cloud.x, camera, 0.2), cloud.y, { scale: 3 });
@@ -81,6 +83,9 @@ export function renderBackground(ctx, camera, level, nowMs) {
       const steam = (nowMs / 350 + pond.x) % 36;
       ctx.fillRect(screenX + pond.width * 0.28, GROUND_Y - steam * 0.45, 7, steam * 0.45);
       ctx.fillRect(screenX + pond.width * 0.62, GROUND_Y - steam * 0.3, 5, steam * 0.3);
+    } else if (level.world === 'travel') {
+      fillSandstone(ctx, screenX, GROUND_Y, 8, GAME_HEIGHT - GROUND_Y);
+      fillSandstone(ctx, screenX + pond.width - 8, GROUND_Y, 8, GAME_HEIGHT - GROUND_Y);
     } else {
       ctx.strokeStyle = 'rgba(255,255,255,0.5)';
       ctx.lineWidth = 2;
@@ -98,6 +103,138 @@ export function renderBackground(ctx, camera, level, nowMs) {
 function hash01(n) {
   const h = Math.sin(n * 12.9898) * 43758.5453;
   return Math.abs(h % 1);
+}
+
+function fillSandstone(ctx, x, y, w, h) {
+  ctx.fillStyle = '#111111';
+  ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+  ctx.fillStyle = '#f3d39a';
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = '#c48a3a';
+  ctx.fillRect(x, y + Math.max(2, h - 3), w, Math.min(3, h));
+}
+
+function renderTravelLandmarks(ctx, camera, level, nowMs) {
+  const mark = level.landmark || 'giza';
+  const horizon = GROUND_Y - 86;
+  if (mark === 'giza' || mark === 'sphinx') {
+    for (let i = 0; i < 8; i++) {
+      const x = parallaxX(80 + i * 220, camera, 0.18);
+      const h = 50 + (i % 3) * 22;
+      ctx.fillStyle = i % 2 ? '#e0b56a' : '#d4a04a';
+      ctx.beginPath();
+      ctx.moveTo(x, horizon);
+      ctx.lineTo(x + 40, horizon - h);
+      ctx.lineTo(x + 80, horizon);
+      ctx.closePath();
+      ctx.fill();
+    }
+    if (mark === 'sphinx') {
+      const x = parallaxX(300, camera, 0.28);
+      ctx.fillStyle = '#c99548';
+      ctx.fillRect(x, horizon - 36, 70, 36);
+      ctx.fillRect(x + 18, horizon - 52, 34, 18);
+    }
+  } else if (mark === 'nile') {
+    for (let i = 0; i < 6; i++) {
+      const x = parallaxX(40 + i * 200, camera, 0.2);
+      ctx.fillStyle = '#2f6b3a';
+      ctx.fillRect(x + 10, horizon - 28, 6, 28);
+      ctx.fillStyle = '#3fae4a';
+      ctx.beginPath();
+      ctx.ellipse(x + 13, horizon - 34, 18, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (mark === 'canyon' || mark === 'canyonFloor') {
+    for (let i = 0; i < 10; i++) {
+      const x = parallaxX(i * 90, camera, 0.16);
+      const h = 40 + hash01(i + 2) * 70;
+      ctx.fillStyle = i % 3 === 0 ? '#a33b1a' : '#c45c26';
+      ctx.fillRect(x, horizon - h, 80, h);
+      ctx.fillStyle = '#e08a4a';
+      ctx.fillRect(x, horizon - h + 12, 80, 6);
+    }
+  } else if (mark === 'paris') {
+    const x = parallaxX(200, camera, 0.22);
+    ctx.strokeStyle = '#2a2a34';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, horizon);
+    ctx.lineTo(x + 30, horizon - 90);
+    ctx.lineTo(x + 60, horizon);
+    ctx.moveTo(x + 8, horizon - 30);
+    ctx.lineTo(x + 52, horizon - 30);
+    ctx.stroke();
+  } else if (mark === 'wall') {
+    for (let i = 0; i < 14; i++) {
+      const x = parallaxX(i * 50, camera, 0.2);
+      ctx.fillStyle = '#8a8f80';
+      ctx.fillRect(x, horizon - 34, 48, 34);
+      ctx.fillRect(x + 4, horizon - 42, 12, 8);
+      ctx.fillRect(x + 28, horizon - 42, 12, 8);
+    }
+  } else if (mark === 'rio') {
+    for (let i = 0; i < 7; i++) {
+      const x = parallaxX(i * 110, camera, 0.18);
+      const h = 36 + hash01(i) * 50;
+      ctx.fillStyle = '#2f8f4a';
+      ctx.beginPath();
+      ctx.moveTo(x, horizon);
+      ctx.lineTo(x + 40, horizon - h);
+      ctx.lineTo(x + 80, horizon);
+      ctx.fill();
+    }
+    const sx = parallaxX(240, camera, 0.25);
+    ctx.fillStyle = '#f4f0e0';
+    ctx.fillRect(sx + 18, horizon - 64, 8, 40);
+    ctx.fillRect(sx, horizon - 50, 44, 8);
+  } else if (mark === 'liberty') {
+    const x = parallaxX(180, camera, 0.24);
+    ctx.fillStyle = '#3fae8a';
+    ctx.fillRect(x + 16, horizon - 70, 12, 70);
+    ctx.fillRect(x, horizon - 48, 44, 8);
+    ctx.fillStyle = '#ffd23f';
+    ctx.fillRect(x + 40, horizon - 78, 6, 14);
+  } else {
+    // Finale: a few silhouettes from the trip.
+    const x1 = parallaxX(80, camera, 0.16);
+    ctx.fillStyle = '#e0b56a';
+    ctx.beginPath();
+    ctx.moveTo(x1, horizon);
+    ctx.lineTo(x1 + 36, horizon - 60);
+    ctx.lineTo(x1 + 72, horizon);
+    ctx.fill();
+    const x2 = parallaxX(260, camera, 0.18);
+    ctx.fillStyle = '#c45c26';
+    ctx.fillRect(x2, horizon - 48, 64, 48);
+    const x3 = parallaxX(430, camera, 0.2);
+    ctx.strokeStyle = '#2a2a34';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x3, horizon);
+    ctx.lineTo(x3 + 22, horizon - 70);
+    ctx.lineTo(x3 + 44, horizon);
+    ctx.stroke();
+  }
+
+  const sunX = GAME_WIDTH - 60;
+  ctx.fillStyle = level.theme.sun;
+  ctx.beginPath();
+  ctx.arc(sunX, 42, 18, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (level.theme.stars) {
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    for (let i = 0; i < 30; i++) {
+      const x = Math.floor(Math.abs((Math.sin(i * 12.9898) * 43758.5453) % 1) * GAME_WIDTH);
+      const y = Math.floor(Math.abs((Math.sin(i * 78.233) * 12345.6789) % 1) * 110);
+      ctx.fillRect(x, y, 2, 2);
+    }
+  }
+
+  const hawkX = ((nowMs / 24) % (GAME_WIDTH + 80)) - 40;
+  ctx.fillStyle = '#5e3c22';
+  ctx.fillRect(hawkX, 28 + Math.sin(nowMs / 400) * 4, 16, 5);
 }
 
 /** Yellow/black caution fill -- city platforms have to read against the skyline. */
@@ -239,6 +376,7 @@ export function renderTerrain(ctx, camera, level, nowMs = 0) {
 
     if (solid.isBeam) {
       if (city) fillCaution(ctx, screenX, solid.y, solid.width, solid.height);
+      else if (level.world === 'travel') fillSandstone(ctx, screenX, solid.y, solid.width, solid.height);
       else {
         ctx.fillStyle = '#5e3c22';
         ctx.fillRect(screenX, solid.y, solid.width, solid.height);
@@ -253,6 +391,8 @@ export function renderTerrain(ctx, camera, level, nowMs = 0) {
     if (solid.height <= 12) {
       if (city) {
         fillCaution(ctx, screenX, solid.y, solid.width, 8);
+      } else if (level.world === 'travel') {
+        fillSandstone(ctx, screenX, solid.y, solid.width, 8);
       } else {
         drawSprite(ctx, LILYPAD, screenX - (spriteSize(LILYPAD).width - solid.width) / 2, solid.y, { scale: 3 });
       }
@@ -260,6 +400,7 @@ export function renderTerrain(ctx, camera, level, nowMs = 0) {
     }
     if (solid.width <= 40) {
       if (city) fillCaution(ctx, screenX, solid.y, solid.width, solid.height);
+      else if (level.world === 'travel') fillSandstone(ctx, screenX, solid.y, solid.width, solid.height);
       else drawSprite(ctx, HAY_BALE, screenX, solid.y, { scale: 3 });
       continue;
     }
@@ -268,7 +409,14 @@ export function renderTerrain(ctx, camera, level, nowMs = 0) {
     ctx.beginPath();
     ctx.rect(screenX, solid.y, solid.width, solid.height);
     ctx.clip();
-    if (city) {
+    if (level.world === 'travel') {
+      ctx.fillStyle = '#c9a45c';
+      ctx.fillRect(screenX, solid.y, solid.width, solid.height);
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(screenX, solid.y, solid.width, 7);
+      ctx.fillStyle = '#f3d39a';
+      ctx.fillRect(screenX, solid.y, solid.width, 5);
+    } else if (city) {
       ctx.fillStyle = '#2a2a32';
       ctx.fillRect(screenX, solid.y, solid.width, solid.height);
       ctx.fillStyle = '#111111';
@@ -316,6 +464,14 @@ export function renderGoal(ctx, camera, level) {
   const g = level.goal;
   const screenX = g.x - camera.x;
   if (screenX < -40 || screenX > GAME_WIDTH + 40) return;
+  if (level.world === 'travel') {
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(screenX - 10, g.y + 18, 40, g.height - 18);
+    fillSandstone(ctx, screenX - 10, g.y + 16, 40, 10);
+    ctx.fillStyle = '#e63946';
+    ctx.fillRect(screenX + 4, g.y + 4, 12, 12);
+    return;
+  }
   if (level.world === 'city') {
     ctx.fillStyle = '#111111';
     ctx.fillRect(screenX - 10, g.y + 18, 40, g.height - 18);

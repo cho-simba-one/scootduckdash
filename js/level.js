@@ -9,6 +9,7 @@ import { Goose, Cart } from './hazards.js';
 import { Pickup } from './pickups.js';
 import { Pig, Bee, Mole, Crow, BouncePad } from './critters.js';
 import { Rat, Pigeon, Taxi, Hydrant, Geyser, Cat, Drone, Dumpster, Crane, Traffic } from './city.js';
+import { Snake, Scorpion, Goat, Hawk } from './travel.js';
 import { hasEgg } from './secrets.js';
 import { spriteSize } from './pixelArt.js';
 import { HAY_BALE, LILYPAD } from './sprites.js';
@@ -75,7 +76,7 @@ export function createLevel(index = 0) {
   for (const [x, y, patrol] of data.geese) geese.push(new Goose(x, y, patrol));
 
   for (const [x, y, range, axis] of (data.carts ?? [])) {
-    const cart = new Cart(x, y, range, axis, data.world === 'city');
+    const cart = new Cart(x, y, range, axis, data.world || 'farm');
     carts.push(cart);
     // The cart's solid is mutated in place each frame, so pushing it once
     // here is enough -- collision code stays blissfully unaware it moves.
@@ -96,7 +97,7 @@ export function createLevel(index = 0) {
   const bees = (data.bees ?? []).map(([x, y, patrol]) => new Bee(x, y, patrol));
   const moles = (data.moles ?? []).map(([x]) => new Mole(x));
   const crows = (data.crows ?? []).map(([x, y, span]) => new Crow(x, y, span));
-  const bounces = (data.bounces ?? []).map(([x, y]) => new BouncePad(x, y, data.world === 'city'));
+  const bounces = (data.bounces ?? []).map(([x, y]) => new BouncePad(x, y, data.world || 'farm'));
   const rats = (data.rats ?? []).map(([x]) => new Rat(x));
   const pigeons = (data.pigeons ?? []).map(([x, y, span]) => new Pigeon(x, y, span));
   const taxis = (data.taxis ?? []).map(([x, y, range]) => new Taxi(x, y, range));
@@ -109,6 +110,10 @@ export function createLevel(index = 0) {
   const cranes = (data.cranes ?? []).map(([x, y, range]) => new Crane(x, y, range));
   for (const crane of cranes) solids.push(crane.solid);
   const traffic = (data.traffic ?? []).map(([x, width]) => new Traffic(x, width));
+  const snakes = (data.snakes ?? []).map(([x]) => new Snake(x));
+  const scorpions = (data.scorpions ?? []).map(([x]) => new Scorpion(x));
+  const goats = (data.goats ?? []).map(([x]) => new Goat(x));
+  const hawks = (data.hawks ?? []).map(([x, y, span]) => new Hawk(x, y, span));
 
   const ponds = data.ponds.map(([x, endX]) => ({ x, width: endX - x }));
 
@@ -138,13 +143,17 @@ export function createLevel(index = 0) {
     story: data.story || '',
     theme: data.theme,
     world: data.world || 'farm',
+    landmark: data.landmark || '',
     cityGate: !!data.cityGate,
+    travelGate: !!data.travelGate,
+    allowWhip: !!(data.world && data.world !== 'farm' && data.world !== 'city'),
     width: data.width,
     wind: data.wind || 0,
     solids, lilyPads, frogs, geese, carts, pickups, ponds, checkpoints,
     pigs, bees, moles, crows, bounces, beams,
     rats, pigeons, taxis, hydrants, geysers,
     cats, drones, dumpsters, cranes, traffic,
+    snakes, scorpions, goats, hawks,
     buildings, animals, goal,
     clouds: scatterClouds(data.width),
   };

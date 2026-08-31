@@ -91,7 +91,7 @@ export class Goose {
  * just sees a solid that happens to be somewhere new this frame.
  */
 export class Cart {
-  constructor(x, y, range, axis, city = false) {
+  constructor(x, y, range, axis, world = 'farm') {
     // Deliberately wider than the hay sprite: a 30px cart gives a 26px duck
     // only 4px of footing, which reads as unfair rather than challenging.
     this.width = spriteSize(HAY_BALE).width * 2;
@@ -100,7 +100,7 @@ export class Cart {
     this.originY = y;
     this.range = range;
     this.axis = axis; // 'h' | 'v'
-    this.city = city;
+    this.world = world;
     this.t = 0;
     this.dx = 0; // this frame's travel, so riders can be carried along
     this.dy = 0;
@@ -138,10 +138,11 @@ export class Cart {
     const screenX = this.solid.x - camera.x;
     const y = this.solid.y;
     const w = this.width;
-    if (this.city) {
+    if (this.world === 'city' || this.world === 'travel') {
+      const top = this.world === 'travel' ? '#e8c36a' : '#ffd23f';
       ctx.fillStyle = '#111111';
       ctx.fillRect(screenX - 1, y - 1, w + 2, 12);
-      ctx.fillStyle = '#ffd23f';
+      ctx.fillStyle = top;
       ctx.fillRect(screenX, y, w, 10);
       ctx.fillStyle = '#111111';
       for (let i = 0; i < w; i += 10) ctx.fillRect(screenX + i, y, 5, 10);
