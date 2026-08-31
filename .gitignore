@@ -3,3 +3,9 @@ server.log
 Thumbs.db
 __pycache__/
 *.pyc
+
+# Presentation art and the generated deck are multi-MB binaries; git history
+# is forever, so only the text sources are tracked.
+presentation/*.pdf
+presentation/backgrounds/
+presentation/preview/
