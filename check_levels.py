@@ -19,6 +19,7 @@ LEVELS_JS = ROOT / "js" / "levels.js"
 LILY_W = 42
 HAY_W = 30
 CART_W = 60
+TAXI_W = 70
 SAFE_EDGE = 92
 MAX_JUMP_X = 115.6
 MAX_JUMP_H = 79.0
@@ -62,6 +63,7 @@ def parse_levels(text: str) -> list[dict]:
             "ponds": _js_array(chunk, "ponds") or [],
             "lilies": _js_array(chunk, "lilies") or [],
             "carts": _js_array(chunk, "carts") or [],
+            "taxis": _js_array(chunk, "taxis") or [],
             "pickups": _js_array(chunk, "pickups") or [],
         })
     return levels
@@ -86,7 +88,7 @@ def check_level(lv: dict) -> list[str]:
         pads = sorted(cx for cx, _y in lv["lilies"] if pond[0] < cx < pond[1])
         for cx, nx in zip(pads, pads[1:]):
             gap = (nx - LILY_W / 2) - (cx + LILY_W / 2)
-            if gap > SAFE_EDGE and not cart_covers(lv["carts"], cx + LILY_W / 2, nx - LILY_W / 2):
+            if gap > SAFE_EDGE and not cart_covers(rides_h(lv), cx + LILY_W / 2, nx - LILY_W / 2):
                 fails.append(
                     f"{name}: lily {cx}->{nx} in pond {pond[0]}-{pond[1]} "
                     f"edge gap {gap:.0f}px > {SAFE_EDGE} and no cart"
@@ -128,11 +130,19 @@ def check_level(lv: dict) -> list[str]:
     return fails
 
 
-def cart_covers(carts, left, right):
-    for x, y, rng, axis in carts:
-        if axis != "h":
-            continue
-        cover_l, cover_r = x, x + rng + CART_W
+def rides_h(lv):
+    out = []
+    for x, y, rng, axis in lv["carts"]:
+        if axis == "h":
+            out.append((x, y, rng, CART_W))
+    for x, y, rng in lv.get("taxis") or []:
+        out.append((x, y, rng, TAXI_W))
+    return out
+
+
+def cart_covers(rides, left, right):
+    for x, _y, rng, width in rides:
+        cover_l, cover_r = x, x + rng + width
         if cover_l <= left + SAFE_EDGE and cover_r >= right - SAFE_EDGE:
             return True
     return False
@@ -142,7 +152,7 @@ def check_pond(name, a, b, lv) -> list[str]:
     fails = []
     pads = sorted((cx, cy) for cx, cy in lv["lilies"] if a < cx < b)
     hcarts = [
-        (x, y, rng) for x, y, rng, axis in lv["carts"] if axis == "h" and a < x < b
+        (x, y, rng, w) for x, y, rng, w in rides_h(lv) if a < x < b
     ]
     if not pads and not hcarts:
         fails.append(f"{name}: pond {a}-{b} has no lilies and no carts")
@@ -150,21 +160,20 @@ def check_pond(name, a, b, lv) -> list[str]:
 
     # Path: ground -> first pad/cart, then along pads, using carts to
     # bridge any oversize pad gap, then last pad/cart -> far ground.
-    points = []
     if pads:
         first_l, _ = lily_edges(pads[0][0])
-        if first_l - a > SAFE_EDGE and not cart_covers(lv["carts"], a, first_l):
+        if first_l - a > SAFE_EDGE and not cart_covers(rides_h(lv), a, first_l):
             fails.append(
                 f"{name}: pond {a}-{b} entry gap {first_l - a:.0f}px (need lily or cart)"
             )
         last_r = lily_edges(pads[-1][0])[1]
-        if b - last_r > SAFE_EDGE and not cart_covers(lv["carts"], last_r, b):
+        if b - last_r > SAFE_EDGE and not cart_covers(rides_h(lv), last_r, b):
             fails.append(
                 f"{name}: pond {a}-{b} exit gap {b - last_r:.0f}px (need lily or cart)"
             )
-    for x, y, rng in hcarts:
+    for x, y, rng, width in hcarts:
         on_gap_ok = any(lily_edges(cx)[1] + SAFE_EDGE >= x for cx, _cy in pads) or x - a <= SAFE_EDGE
-        off_right = x + rng + CART_W
+        off_right = x + rng + width
         off_gap_ok = any(lily_edges(cx)[0] - SAFE_EDGE <= off_right for cx, _cy in pads) or b - off_right <= SAFE_EDGE
         if not on_gap_ok:
             fails.append(f"{name}: cannot hop ON cart at {x} in pond {a}-{b}")
@@ -175,8 +184,8 @@ def check_pond(name, a, b, lv) -> list[str]:
 
 def main():
     levels = parse_levels(LEVELS_JS.read_text(encoding="utf-8"))
-    if len(levels) < 10:
-        raise SystemExit(f"expected at least 10 levels, parsed {len(levels)}")
+    if len(levels) < 20:
+        raise SystemExit(f"expected at least 20 levels, parsed {len(levels)}")
     fails = []
     for lv in levels:
         fails.extend(check_level(lv))

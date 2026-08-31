@@ -79,7 +79,11 @@ export const PALETTE = {
   P: '#e89ab0', // pig pink
   B: '#f5d142', // bee gold
   C: '#2b2b33', // crow black
-  u: '#7b5ea7'  // dusk purple
+  u: '#7b5ea7', // dusk purple
+  v: '#9aa0a8', // alley cat
+  d: '#2d6a4f', // dumpster green
+  i: '#5c6b73', // drone steel
+  z: '#ff4fd0', // neon pink
 };
 
 // NOTE: every palette key MUST be exactly one character -- sprite grids

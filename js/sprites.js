@@ -204,6 +204,48 @@ export const HAY_BALE = [
   'hhhhhhhhhh',
 ];
 
+export const CRATE = [
+  '.HHHHHHHH.',
+  'HhhhhhhhH',
+  'HhHhhhHhH',
+  'HhhhhhhhH',
+  '.HHHHHHHH.',
+];
+
+export const RAT = [
+  'nn...nn',
+  'nNnwwnn',
+  'nnnnnnn',
+  '.n...n.',
+];
+
+export const PIGEON = [
+  '..ee.ee.',
+  '.eeeeeeo',
+  'eewweee.',
+  '.ee.ee..',
+];
+
+export const TAXI = [
+  '..yyyyyyyy..',
+  '.ykkkkkkkky.',
+  'yyyyyyyyyyyy',
+  'k.k......k.k',
+];
+
+export const CAT = [
+  '..vvv..',
+  '.vwwvv.',
+  'vvvvvvo',
+  '.v...v.',
+];
+
+export const DRONE = [
+  'r.iii.r',
+  '.iiwii.',
+  '..sss..',
+];
+
 export const FARMHOUSE = [
   '............eeeeeeeeeeeeee............',
   '..........eeeeeeeeeeeeeeeeee..........',

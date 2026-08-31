@@ -1,31 +1,30 @@
-# Duck Scooter Dash 
+# Duck Scooter Dash
 
 A Mario-style side-scroller demo starring a rubber ducky in a propeller hat,
-riding a kick scooter through a farmyard world. Built as a phone-portable
-web game (plain HTML5 Canvas + JS — no framework lock-in, easy to wrap in
-Cordova/Capacitor later for an actual app store build).
+riding a kick scooter. Built as a phone-portable web game (plain HTML5 Canvas
++ JS — no framework lock-in, easy to wrap in Cordova/Capacitor later).
+
+The HUD never prints how far you have left. Clear a stage, get a START button
+for the next one.
 
 ## Current scope (playable demo)
 
 - Title screen with mouse-clickable START button
-- Ten levels, each with its own track, a START button, and a skill to learn
+- Two worlds so far (farm, then city), each stage with its own track, a START
+  button, and a skill to learn
 - Player controls:
   - Keyboard: Left / Right move, Up jump, Down duck, Space shoot
   - Touch (phones/tablets): on-screen buttons auto-appear on any touch-capable
     device once you tap START -- left/right pad, plus jump/duck/shoot buttons.
     Same underlying input state as the keyboard, so both work simultaneously.
-- Enemies: frogs that hop between lily pads and shoot their tongue as a
-  ranged attack. Stomp them from above (Mario-style) OR snipe them with a
-  propeller shot to neutralize.
+- Farm foes: frogs (tongue), geese, pigs, bees, moles, crows. Stomp or snipe.
+- City foes: rats, pigeons, alley cats, security drones, slamming dumpsters.
+  Taxi roofs are rideable; bumpers are not.
+- Street gadgets: hydrant jets (duck), manhole steam (jump when off), conveyor
+  belts, timed traffic, crane hooks, bounce crates, low pipes.
 - Original instrumental soundtrack, synthesized live in the browser via the
-  Web Audio API (no audio files -- same "everything's procedurally generated"
-  philosophy as the pixel art). "Hacker techno" vibe: cold square-wave bass
-  pulse that dips into a dissonant minor-second neighbor tone for tension,
-  sparse irregular digital "data blip" hits, a deep sub-bass drone, and
-  occasional glitchy clicks instead of a steady beat -- deliberately sparse
-  and tense, not upbeat or melodic. The main theme stops the instant you win
-  or lose, replaced by a short victory/game-over jingle. Press M or tap the
-  on-screen note-icon button to mute.
+  Web Audio API (no audio files). Press M or tap the on-screen note-icon
+  button to mute.
 - Simple platforming physics (gravity, ground/platform collision)
 
 ## Run it
@@ -49,54 +48,53 @@ js/                   all game code (ES modules)
   player.js                duck-scooter player entity
   projectile.js             propeller shot entity
   enemy.js                   frog enemy entity
-  level.js                    level data + platform/collision layout
-  camera.js                    side-scrolling camera
-  titleScreen.js                 title screen state + START button
-  game.js                         main game state machine + loop
-  main.js                          bootstrap
+  critters.js                 farm critters + bounce pads
+  city.js                      city foes, cabs, steam, cranes, traffic
+  hazards.js                    geese + moving carts
+  level.js                       builder: data -> collision/entities
+  levels.js                       declarative stage data
+  camera.js                        side-scrolling camera
+  background.js                     sky / farm / city parallax
+  titleScreen.js                     title screen state + START button
+  game.js                             main game state machine + loop
+  main.js                              bootstrap
 assets/icons/         generated PWA app icons
 ```
 
-## Levels
+## Worlds
 
-Ten levels. Each one teaches a skill, has its own track, and waits on a START button.
+Stages are **pure data** in `js/levels.js`; `js/level.js` builds them. Adding
+another stage is a data edit, never a code edit (plus a track in
+`js/musicData.js`). Hearts carry between stages and you get one back for
+clearing one. The player-facing UI shows the stage name only.
 
-| # | Name | New skill | Music |
-|---|------|-----------|-------|
-| 1 | Farmyard Frolic | Frogs (tongue) | 96bpm square techno |
-| 2 | Orchard Sunset | Patrolling geese | 112bpm triangle bass |
-| 3 | Midnight Pond | Moving hay carts | 76bpm sine dread |
-| 4 | Dawn Hayride | Cart timing | 120bpm running triangle |
-| 5 | Storm on the Pond | Back-to-back carts | 88bpm saw rumble |
-| 6 | Pig Pen | Jump pigs, duck rails | 108bpm square stomp |
-| 7 | Bee Meadow | Shoot bees, bounce pads | 128bpm buzz |
-| 8 | Mole Patch | Wait out popping moles | 92bpm dirt pulse |
-| 9 | Crow Ridge | Wind + bounce for height | 118bpm gale |
-| 10 | Moonlit Fair | Everything at once | 100bpm carnival minor |
+**Farm** teaches frogs, geese, hay carts, pigs, duck-under rails, bees,
+bounce flowers, moles, crows, and wind.
 
-Levels are **pure data** in `js/levels.js`; `js/level.js` builds them. Adding
-another level is a data edit, never a code edit (plus a track in
-`js/musicData.js`). Hearts carry between levels and you get one back for
-clearing one.
+**City** opens with a "THE CITY" card. It teaches rats, pigeons, taxi roofs,
+hydrant jets, steam vents, conveyors, pouncing cats, dumpster lids, drones,
+jump-over traffic, and crane lifts. Potholes reuse the pond death, painted
+as caution stripes. Night / rain / neon tints sit on a live skyline (blinking
+windows, elevated train, two-way traffic, storefronts, lamps, weather).
 
 ### Level design constraint
-Jump distance is finite, so a pond gap that's too wide makes a level literally
+Jump distance is finite, so a pond gap that's too wide makes a stage literally
 unbeatable. `js/constants.js` fixes the physics; the derived maximum is
 **115.6px** (34 airborne frames x 3.4 max speed, simulated in the same
 gravity-then-position order `player.js` integrates -- the closed-form answer is
 ~3px optimistic because airtime quantises to whole frames). Level data should
-keep every edge-to-edge gap under ~92px to leave a real margin.
+keep every edge-to-edge gap under ~92px to leave a real margin. Horizontal
+taxis count as rides the same way carts do.
 
 ## Audio
 
 Everything is synthesized live in the browser -- no audio files, same
 "everything is code" rule the pixel art follows.
 
-- `js/musicData.js` -- one TRACK per level (tempo, waveforms, patterns) plus
-  the one-shot fanfares. Adding a level means adding a track object here.
-- `js/sfx.js` -- nine gameplay sounds. Each creature gets its own timbre AND
-  register so you can tell what happened without looking: frogs croak low and
-  wet, geese honk nasal and harsh, carts creak like wood.
+- `js/musicData.js` -- one TRACK per stage (tempo, waveforms, patterns) plus
+  the one-shot fanfares. Adding a stage means adding a track object here.
+- `js/sfx.js` -- gameplay sounds. Each creature gets its own timbre AND
+  register so you can tell what happened without looking.
 - `js/music.js` -- the engine (lookahead sequencer + node graph). It knows how
   to play things, never what is being played.
 
@@ -112,8 +110,7 @@ AudioContext exists -- gameplay must never depend on audio being available.
 ## Roadmap (not in current demo scope)
 
 - Power-ups (speed boost, shield/star invincibility)
-- More levels (just append to `js/levels.js`) / world map
-- Sound effects (jump/hit/pickup blips) to go with the new music
+- Another world after the city
 - Score / lives / HUD polish
 - Real native APK/.exe build (Capacitor/Electron) -- needs Node.js + Android
   SDK/Java toolchain, not installed in this project's dev environment yet

@@ -3,12 +3,11 @@
 
 import { GAME_WIDTH, GAME_HEIGHT } from './constants.js';
 import { renderSky } from './background.js';
-import { LEVEL_COUNT } from './level.js';
 import { drawSprite } from './pixelArt.js';
 import { DUCK_IDLE, CLOUD, FARMHOUSE, BARN, withWhiteEye } from './sprites.js';
 import { isGod } from './cheats.js';
 import { Music } from './music.js';
-import { eggCount, EGG_TOTAL, allEggsFound, armLuckyRun } from './secrets.js';
+import { eggCount, allEggsFound, armLuckyRun } from './secrets.js';
 
 export const START_BUTTON = { x: GAME_WIDTH / 2 - 70, y: 185, width: 140, height: 40 };
 
@@ -26,7 +25,7 @@ export function isInsideButton(mx, my) {
   return mx >= b.x && mx <= b.x + b.width && my >= b.y && my <= b.y + b.height;
 }
 
-/** Title wordmark + level count -- tap this on a phone to type IDDQD. */
+/** Title wordmark -- tap this on a phone to type IDDQD. */
 export function isInsideTitle(mx, my) {
   return mx >= 24 && mx <= GAME_WIDTH - 24 && my >= 40 && my <= 115;
 }
@@ -90,12 +89,11 @@ export function render(ctx, nowMs) {
   ctx.fillStyle = '#ffd23f';
   ctx.fillText(title, GAME_WIDTH / 2, 70);
 
-  ctx.font = "12px 'Press Start 2P', monospace";
-  ctx.fillStyle = '#1a1a1a';
-  ctx.fillText(`${LEVEL_COUNT} Levels`, GAME_WIDTH / 2, 100);
-  ctx.font = "10px 'Press Start 2P', monospace";
-  ctx.fillStyle = allEggsFound() ? '#ffd23f' : '#5e3c22';
-  ctx.fillText(`EGGS ${eggCount()}/${EGG_TOTAL}`, GAME_WIDTH / 2, 118);
+  if (eggCount() > 0) {
+    ctx.font = "10px 'Press Start 2P', monospace";
+    ctx.fillStyle = allEggsFound() ? '#ffd23f' : '#5e3c22';
+    ctx.fillText(`EGGS ${eggCount()}`, GAME_WIDTH / 2, 104);
+  }
 
   // START button.
   const b = START_BUTTON;

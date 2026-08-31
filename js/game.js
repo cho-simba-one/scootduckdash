@@ -9,7 +9,7 @@ import { Player, overlaps } from './player.js';
 import { Pickup } from './pickups.js';
 import { Camera } from './camera.js';
 import { createLevel, LEVEL_COUNT } from './level.js';
-import { markEgg, consumeLuckyRun, eggCount, EGG_TOTAL, allEggsFound } from './secrets.js';
+import { markEgg, consumeLuckyRun, eggCount, allEggsFound } from './secrets.js';
 import {
   renderSky, renderBackground, renderTerrain, renderGoal, renderThemeOverlay,
 } from './background.js';
@@ -166,6 +166,8 @@ export class Game {
     // Carts move BEFORE the player so he collides against this frame's
     // position -- otherwise a rising cart clips straight through him.
     for (const cart of level.carts) cart.update(dtMs);
+    for (const taxi of level.taxis) taxi.update(dtMs);
+    for (const crane of level.cranes) crane.update(dtMs);
 
     const wasGrounded = player.grounded;
     const heartsBefore = player.hearts;
@@ -176,8 +178,14 @@ export class Game {
     // snapped the rider onto the moved deck, so adding dy again produced a
     // ~1.75px vertical jitter that reversed at each end of a cart's stroke.
     for (const cart of level.carts) cart.carry(player);
+    for (const taxi of level.taxis) taxi.carry(player);
+    for (const crane of level.cranes) crane.carry(player);
 
     player.update(dtMs, level.solids, nowMs);
+
+    if (player.groundSolid && player.groundSolid.belt) {
+      player.x += player.groundSolid.belt * 1.55 * (dtMs / 16.6667);
+    }
 
     if (level.wind && !player.grounded) {
       player.vx += level.wind * (dtMs / 16.6667);
@@ -334,6 +342,65 @@ export class Game {
     }
     level.crows = level.crows.filter((c) => !c.dead);
 
+    for (const rat of level.rats) {
+      rat.update(dtMs);
+      hitFoe(player, playerBox, this.projectiles, rat, nowMs, 'rat');
+    }
+    level.rats = level.rats.filter((r) => !r.dead);
+
+    for (const pigeon of level.pigeons) {
+      pigeon.update(dtMs);
+      hitFoe(player, playerBox, this.projectiles, pigeon, nowMs, 'pigeon');
+    }
+    level.pigeons = level.pigeons.filter((p) => !p.dead);
+
+    for (const cat of level.cats) {
+      cat.update(dtMs);
+      hitFoe(player, playerBox, this.projectiles, cat, nowMs, 'cat');
+    }
+    level.cats = level.cats.filter((c) => !c.dead);
+
+    for (const drone of level.drones) {
+      drone.update(dtMs);
+      hitFoe(player, playerBox, this.projectiles, drone, nowMs, 'drone');
+    }
+    level.drones = level.drones.filter((d) => !d.dead);
+
+    for (const dump of level.dumpsters) {
+      dump.update(dtMs);
+      hitFoe(player, playerBox, this.projectiles, dump, nowMs, 'dumpster');
+    }
+    level.dumpsters = level.dumpsters.filter((d) => !d.dead);
+
+    for (const wave of level.traffic) {
+      wave.update(dtMs);
+      const box = wave.getHitbox();
+      if (box && overlaps(playerBox, box)) {
+        const stompDepth = playerBox.y + playerBox.height - box.y;
+        const isStomp = player.vy > 0 && stompDepth < box.height * 0.7;
+        if (isStomp) {
+          player.stompBounce();
+          Music.play('stomp');
+        } else {
+          player.takeDamage(nowMs, wave.x);
+        }
+      }
+    }
+
+    for (const taxi of level.taxis) {
+      if (player.groundSolid === taxi.solid) continue;
+      const box = taxi.getHitbox();
+      if (box && overlaps(playerBox, box) && player.vy <= 0) {
+        player.takeDamage(nowMs, taxi.solid.x);
+      }
+    }
+
+    for (const jet of [...level.hydrants, ...level.geysers]) {
+      jet.update(dtMs);
+      const box = jet.getHitbox();
+      if (box && overlaps(playerBox, box)) player.takeDamage(nowMs, jet.x);
+    }
+
     // Fell in a pond -- ouch, respawn at the last checkpoint reached.
     if (player.y > GAME_HEIGHT + 60) {
       Music.play('splash');
@@ -388,8 +455,13 @@ export class Game {
     const level = this.level;
     renderSky(ctx, level.theme);
     renderBackground(ctx, this.camera, level, nowMs);
-    renderTerrain(ctx, this.camera, level);
+    renderTerrain(ctx, this.camera, level, nowMs);
     for (const cart of level.carts) cart.render(ctx, this.camera);
+    for (const taxi of level.taxis) taxi.render(ctx, this.camera);
+    for (const crane of level.cranes) crane.render(ctx, this.camera);
+    for (const jet of level.hydrants) jet.render(ctx, this.camera);
+    for (const jet of level.geysers) jet.render(ctx, this.camera);
+    for (const wave of level.traffic) wave.render(ctx, this.camera);
     for (const pad of level.bounces) pad.render(ctx, this.camera);
     for (const pickup of level.pickups) pickup.render(ctx, this.camera);
     for (const frog of level.frogs) frog.render(ctx, this.camera);
@@ -397,6 +469,11 @@ export class Game {
     for (const bee of level.bees) bee.render(ctx, this.camera);
     for (const mole of level.moles) mole.render(ctx, this.camera);
     for (const crow of level.crows) crow.render(ctx, this.camera);
+    for (const rat of level.rats) rat.render(ctx, this.camera);
+    for (const pigeon of level.pigeons) pigeon.render(ctx, this.camera);
+    for (const cat of level.cats) cat.render(ctx, this.camera);
+    for (const drone of level.drones) drone.render(ctx, this.camera);
+    for (const dump of level.dumpsters) dump.render(ctx, this.camera);
     for (const goose of level.geese) goose.render(ctx, this.camera);
     renderGoal(ctx, this.camera, level);
     this.player.render(ctx, this.camera, nowMs);
@@ -406,20 +483,18 @@ export class Game {
     renderHud(ctx, this.player, level);
 
     if (this.state === STATE.INTRO) {
-      renderCard(
-        ctx,
-        `LEVEL ${level.index + 1}/${LEVEL_COUNT}`,
-        level.name,
-        level.skill || level.subtitle,
-        { button: 'START', hover: this.introHover },
-      );
+      if (level.cityGate) {
+        renderCard(ctx, 'THE CITY', level.name, level.skill || '', { button: 'START', hover: this.introHover });
+      } else {
+        renderCard(ctx, level.name, level.skill || level.subtitle, '', { button: 'START', hover: this.introHover });
+      }
     }
     if (this.state === STATE.LEVEL_CLEAR) {
       renderCard(ctx, 'LEVEL CLEAR!', level.name, '+1 heart');
     }
     if (this.state === STATE.WIN) {
-    renderEndScreen(ctx, allEggsFound() ? 'EGG HUNTER!' : 'YOU WIN!', '#2a9d3f');
-  }
+      renderEndScreen(ctx, allEggsFound() ? 'EGG HUNTER!' : 'YOU WIN!', '#2a9d3f');
+    }
     if (this.state === STATE.GAMEOVER) renderEndScreen(ctx, 'GAME OVER', '#e63946');
 
     drawMuteButton(ctx, Music.muted); // always last so it stays on top of overlays
@@ -527,15 +602,17 @@ function renderHud(ctx, player, level) {
     drawHeart(ctx, 16 + i * 26, 16, gold || i < player.hearts, gold);
   }
 
-  // Level counter, below the high route. A bonus heart bobs through
+  // Stage name only -- never a count. A bonus heart bobs through
   // y=33..57 (baseY 36, +/-3 bob, and the sprite is 6 rows at scale 3 = 18px
   // tall -- it's the sprite HEIGHT that makes the band, and undercounting it
   // is how two earlier attempts at this landed inside the heart).
   ctx.font = "8px 'Press Start 2P', monospace";
   ctx.fillStyle = 'rgba(0,0,0,0.65)';
-  ctx.fillText(`LEVEL ${level.index + 1}/${LEVEL_COUNT}  ${level.name}`, 16, 66);
-  ctx.fillStyle = '#e0b23a';
-  ctx.fillText(`EGGS ${eggCount()}/${EGG_TOTAL}`, 16, 80);
+  ctx.fillText(level.name, 16, 66);
+  if (eggCount() > 0) {
+    ctx.fillStyle = '#e0b23a';
+    ctx.fillText(`EGGS ${eggCount()}`, 16, 80);
+  }
 }
 
 function drawHeart(ctx, x, y, filled, gold = false) {

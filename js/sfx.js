@@ -156,6 +156,30 @@ export const SFX = {
     tone(ctx, dest, { from: 260, to: 140, dur: 0.18, type: 'square', gain: 0.08, delay: 0.05 });
   },
 
+  rat(ctx, dest) {
+    tone(ctx, dest, { from: 420, to: 180, dur: 0.1, type: 'square', gain: 0.08 });
+  },
+
+  pigeon(ctx, dest) {
+    tone(ctx, dest, { from: 700, to: 420, dur: 0.12, type: 'triangle', gain: 0.08 });
+    tone(ctx, dest, { from: 710, to: 430, dur: 0.12, type: 'triangle', gain: 0.04 });
+  },
+
+  cat(ctx, dest) {
+    tone(ctx, dest, { from: 540, to: 280, dur: 0.14, type: 'sawtooth', gain: 0.09 });
+    tone(ctx, dest, { from: 360, to: 180, dur: 0.16, type: 'square', gain: 0.05, delay: 0.03 });
+  },
+
+  drone(ctx, dest) {
+    tone(ctx, dest, { from: 980, to: 420, dur: 0.16, type: 'square', gain: 0.07 });
+    noise(ctx, dest, { dur: 0.1, type: 'bandpass', freq: 1600, sweepTo: 400, q: 2, gain: 0.05 });
+  },
+
+  dumpster(ctx, dest) {
+    noise(ctx, dest, { dur: 0.18, type: 'lowpass', freq: 500, sweepTo: 80, gain: 0.12 });
+    tone(ctx, dest, { from: 140, to: 70, dur: 0.14, type: 'square', gain: 0.06 });
+  },
+
   egg(ctx, dest) {
     const notes = [659.25, 783.99, 987.77, 1318.51];
     notes.forEach((freq, i) => {

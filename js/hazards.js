@@ -91,7 +91,7 @@ export class Goose {
  * just sees a solid that happens to be somewhere new this frame.
  */
 export class Cart {
-  constructor(x, y, range, axis) {
+  constructor(x, y, range, axis, city = false) {
     // Deliberately wider than the hay sprite: a 30px cart gives a 26px duck
     // only 4px of footing, which reads as unfair rather than challenging.
     this.width = spriteSize(HAY_BALE).width * 2;
@@ -100,6 +100,7 @@ export class Cart {
     this.originY = y;
     this.range = range;
     this.axis = axis; // 'h' | 'v'
+    this.city = city;
     this.t = 0;
     this.dx = 0; // this frame's travel, so riders can be carried along
     this.dy = 0;
@@ -136,6 +137,20 @@ export class Cart {
   render(ctx, camera) {
     const screenX = this.solid.x - camera.x;
     const y = this.solid.y;
+    const w = this.width;
+    if (this.city) {
+      ctx.fillStyle = '#6a6a74';
+      ctx.fillRect(screenX, y, w, 10);
+      ctx.fillStyle = '#f1c40f';
+      ctx.fillRect(screenX + 2, y, w - 4, 3);
+      ctx.fillStyle = '#1a1a1a';
+      for (const wx of [screenX + 8, screenX + w - 16]) {
+        ctx.beginPath();
+        ctx.arc(wx + 4, y + 14, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      return;
+    }
     // Two bales side by side to fill the wider deck.
     drawSprite(ctx, HAY_BALE, screenX, y, { scale: 3 });
     drawSprite(ctx, HAY_BALE, screenX + this.width / 2, y, { scale: 3 });
@@ -143,7 +158,6 @@ export class Cart {
     // Wheels + axle so a moving cart reads differently from static hay.
     // Without this the player can't tell a hazard from scenery until it
     // has already moved, which isn't a fair challenge.
-    const w = this.width;
     ctx.fillStyle = '#5e3c22';
     ctx.fillRect(screenX + 2, y + 28, w - 4, 4);
     ctx.fillStyle = '#1a1a1a';

@@ -8,12 +8,12 @@
 
 // Equal-tempered note frequencies (A4 = 440Hz).
 const NOTE_FREQ = {
-  A1: 55.00, C2: 65.41, D2: 73.42, E2: 82.41, F2: 87.31, G2: 98.00,
-  A2: 110.00, Bb2: 116.54, C3: 130.81, D3: 146.83, Eb3: 155.56, E3: 164.81,
+  A1: 55.00, C2: 65.41, D2: 73.42, Eb2: 77.78, E2: 82.41, F2: 87.31, G2: 98.00,
+  Ab2: 103.83, A2: 110.00, Bb2: 116.54, B2: 123.47, C3: 130.81, D3: 146.83, Eb3: 155.56, E3: 164.81,
   F3: 174.61, G3: 196.00, A3: 220.00, Bb3: 233.08, B3: 246.94,
-  C4: 261.63, Eb4: 311.13, D4: 293.66,
-  E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, Bb4: 466.16, B4: 493.88,
-  C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00,
+  C4: 261.63, D4: 293.66, Eb4: 311.13,
+  E4: 329.63, F4: 349.23, G4: 392.00, Ab4: 415.30, A4: 440.00, Bb4: 466.16, B4: 493.88,
+  C5: 523.25, D5: 587.33, Eb5: 622.25, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00,
   C6: 1046.50, E6: 1318.51, G6: 1567.98,
 };
 
@@ -222,7 +222,111 @@ const FAIR = {
   clicks: [0, 5, 8, 13],
 };
 
-export const TRACKS = [FARMYARD, ORCHARD, MIDNIGHT, DAWN, STORM, PIGPEN, MEADOW, MOLES, GALE, FAIR];
+const CURB = {
+  name: 'Curb Check', bpm: 114, loopSteps: 16,
+  bass: { type: 'square', gain: 0.10, length: 0.9,
+    pattern: ['A2', null, 'A2', 'E3', null, 'A2', null, 'G2',
+              'A2', null, 'A2', 'E3', null, 'C3', null, 'A2'] },
+  lead: { type: 'sawtooth', gain: 0.04, length: 0.7,
+    pattern: [null, 'A4', null, 'E5', null, null, 'C5', null,
+              null, 'A4', null, null, 'G4', null, 'E4', null] },
+  drone: { note: 'A1', type: 'sine', gain: 0.08 }, clicks: [0, 4, 8, 12],
+};
+const SQUARE = {
+  name: 'Pigeon Square', bpm: 122, loopSteps: 16,
+  bass: { type: 'triangle', gain: 0.10, length: 0.8,
+    pattern: ['D3', 'A3', null, 'D3', 'F3', 'C4', null, 'F3',
+              'G2', 'D3', null, 'G2', 'A2', 'E3', null, 'A2'] },
+  lead: { type: 'square', gain: 0.045, length: 0.5,
+    pattern: ['D5', null, 'F5', null, 'A4', null, 'D5', null,
+              'E5', null, 'A4', null, 'C5', null, 'G4', null] },
+  drone: { note: 'D2', type: 'triangle', gain: 0.07 }, clicks: [0, 3, 8, 11],
+};
+const RUSH = {
+  name: 'Rush Hour', bpm: 132, loopSteps: 16,
+  bass: { type: 'sawtooth', gain: 0.08, length: 0.7,
+    pattern: ['E2', 'E3', 'E2', 'G2', 'E2', 'E3', 'B2', 'E3',
+              'D2', 'D3', 'D2', 'F2', 'D2', 'D3', 'A2', 'D3'] },
+  lead: { type: 'square', gain: 0.04, length: 0.4,
+    pattern: ['B4', 'E5', null, 'G5', null, 'E5', 'B4', null,
+              'A4', 'D5', null, 'F5', null, 'D5', 'A4', null] },
+  drone: { note: 'E2', type: 'sine', gain: 0.08 }, clicks: [0, 2, 4, 8, 10, 12],
+};
+const STEAM = {
+  name: 'Alley Steam', bpm: 96, loopSteps: 16,
+  bass: { type: 'sine', gain: 0.12, length: 1.5,
+    pattern: ['G2', null, null, 'D3', null, null, 'G2', null,
+              'F2', null, null, 'C3', null, null, 'Bb2', null] },
+  lead: { type: 'triangle', gain: 0.05, length: 1.4,
+    pattern: [null, null, 'G4', null, null, 'Bb4', null, null,
+              null, 'F4', null, null, 'D4', null, 'G4', null] },
+  drone: { note: 'G2', type: 'sine', gain: 0.1 }, clicks: [0, 7, 11],
+};
+const BELT = {
+  name: 'Belt Yard', bpm: 110, loopSteps: 16,
+  bass: { type: 'square', gain: 0.09, length: 1.0,
+    pattern: ['C3', null, 'G3', 'C3', null, 'Eb3', null, 'G3',
+              'Bb2', null, 'F3', 'Bb2', null, 'D3', null, 'F3'] },
+  lead: { type: 'sawtooth', gain: 0.04, length: 0.9,
+    pattern: ['C5', null, null, 'G4', null, 'Eb5', null, null,
+              'Bb4', null, null, 'F4', null, 'D5', null, null] },
+  drone: { note: 'C2', type: 'triangle', gain: 0.08 }, clicks: [0, 4, 9, 12],
+};
+const SCAFF = {
+  name: 'Scaffold Run', bpm: 116, loopSteps: 16,
+  bass: { type: 'triangle', gain: 0.10, length: 0.85,
+    pattern: ['A2', 'E3', 'A2', null, 'C3', 'G3', 'C3', null,
+              'G2', 'D3', 'G2', null, 'Bb2', 'F3', 'Bb2', null] },
+  lead: { type: 'square', gain: 0.045, length: 0.6,
+    pattern: [null, 'A4', 'C5', null, 'E5', null, 'C5', null,
+              null, 'G4', 'Bb4', null, 'D5', null, 'Bb4', null] },
+  drone: { note: 'A2', type: 'sine', gain: 0.07 }, clicks: [0, 5, 8, 13],
+};
+const MARKET = {
+  name: 'Night Market', bpm: 104, loopSteps: 16,
+  bass: { type: 'sawtooth', gain: 0.07, length: 1.2,
+    pattern: ['F2', null, 'C3', null, 'Ab2', null, 'Eb3', null,
+              'F2', null, 'C3', null, 'Bb2', null, 'F3', null] },
+  lead: { type: 'triangle', gain: 0.05, length: 1.1,
+    pattern: ['Ab4', null, null, 'C5', null, 'F5', null, null,
+              'Eb5', null, null, 'Bb4', null, 'Ab4', null, null] },
+  drone: { note: 'F2', type: 'sine', gain: 0.09 }, clicks: [0, 6, 10],
+};
+const OVER = {
+  name: 'Overpass', bpm: 124, loopSteps: 16,
+  bass: { type: 'square', gain: 0.09, length: 0.75,
+    pattern: ['D2', 'D3', null, 'D2', 'F2', 'A2', null, 'D3',
+              'C2', 'C3', null, 'C2', 'Eb2', 'G2', null, 'C3'] },
+  lead: { type: 'sawtooth', gain: 0.04, length: 0.55,
+    pattern: ['A4', null, 'D5', null, 'F5', null, 'A4', null,
+              'G4', null, 'C5', null, 'Eb5', null, 'G4', null] },
+  drone: { note: 'D2', type: 'triangle', gain: 0.08 }, clicks: [0, 2, 8, 10],
+};
+const HAT = {
+  name: 'Hard Hat', bpm: 108, loopSteps: 16,
+  bass: { type: 'sine', gain: 0.11, length: 1.1,
+    pattern: ['E2', null, 'B2', null, 'E3', null, 'G2', null,
+              'D2', null, 'A2', null, 'D3', null, 'F2', null] },
+  lead: { type: 'square', gain: 0.04, length: 0.8,
+    pattern: [null, 'E4', null, 'G4', null, 'B4', null, 'E5',
+              null, 'D4', null, 'F4', null, 'A4', null, 'D5'] },
+  drone: { note: 'E2', type: 'sine', gain: 0.09 }, clicks: [0, 4, 7, 12],
+};
+const NEON = {
+  name: 'Neon Run', bpm: 120, loopSteps: 16,
+  bass: { type: 'sawtooth', gain: 0.08, length: 0.9,
+    pattern: ['C3', null, 'G3', 'Bb2', null, 'F3', 'Ab2', null,
+              'C3', null, 'G3', 'Eb3', null, 'Bb2', 'F3', null] },
+  lead: { type: 'triangle', gain: 0.055, length: 0.7,
+    pattern: ['G5', null, 'Eb5', null, 'C5', null, 'Bb4', null,
+              'Ab4', null, 'C5', null, 'Eb5', null, 'G5', null] },
+  drone: { note: 'C2', type: 'sine', gain: 0.1 }, clicks: [0, 3, 8, 11, 14],
+};
+
+export const TRACKS = [
+  FARMYARD, ORCHARD, MIDNIGHT, DAWN, STORM, PIGPEN, MEADOW, MOLES, GALE, FAIR,
+  CURB, SQUARE, RUSH, STEAM, BELT, SCAFF, MARKET, OVER, HAT, NEON,
+];
 
 /** Track for a level index, clamped so extra levels reuse the last one. */
 export function trackFor(levelIndex) {

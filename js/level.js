@@ -8,6 +8,7 @@ import { Frog } from './enemy.js';
 import { Goose, Cart } from './hazards.js';
 import { Pickup } from './pickups.js';
 import { Pig, Bee, Mole, Crow, BouncePad } from './critters.js';
+import { Rat, Pigeon, Taxi, Hydrant, Geyser, Cat, Drone, Dumpster, Crane, Traffic } from './city.js';
 import { hasEgg } from './secrets.js';
 import { spriteSize } from './pixelArt.js';
 import { HAY_BALE, LILYPAD } from './sprites.js';
@@ -57,7 +58,12 @@ export function createLevel(index = 0) {
     .filter(([x, y, kind]) => kind !== 'egg' || !hasEgg(index))
     .map(([x, y, kind]) => new Pickup(x, y, kind));
 
-  for (const [x, width] of data.ground) solids.push(groundStrip(x, width));
+  for (const row of data.ground) {
+    const [x, width, belt] = row;
+    const strip = groundStrip(x, width);
+    if (belt) strip.belt = belt;
+    solids.push(strip);
+  }
   for (const [x, y] of data.hay) solids.push(hayPlatform(x, y));
 
   for (const [centerX, topY] of data.lilies) {
@@ -69,7 +75,7 @@ export function createLevel(index = 0) {
   for (const [x, y, patrol] of data.geese) geese.push(new Goose(x, y, patrol));
 
   for (const [x, y, range, axis] of (data.carts ?? [])) {
-    const cart = new Cart(x, y, range, axis);
+    const cart = new Cart(x, y, range, axis, data.world === 'city');
     carts.push(cart);
     // The cart's solid is mutated in place each frame, so pushing it once
     // here is enough -- collision code stays blissfully unaware it moves.
@@ -90,7 +96,19 @@ export function createLevel(index = 0) {
   const bees = (data.bees ?? []).map(([x, y, patrol]) => new Bee(x, y, patrol));
   const moles = (data.moles ?? []).map(([x]) => new Mole(x));
   const crows = (data.crows ?? []).map(([x, y, span]) => new Crow(x, y, span));
-  const bounces = (data.bounces ?? []).map(([x, y]) => new BouncePad(x, y));
+  const bounces = (data.bounces ?? []).map(([x, y]) => new BouncePad(x, y, data.world === 'city'));
+  const rats = (data.rats ?? []).map(([x]) => new Rat(x));
+  const pigeons = (data.pigeons ?? []).map(([x, y, span]) => new Pigeon(x, y, span));
+  const taxis = (data.taxis ?? []).map(([x, y, range]) => new Taxi(x, y, range));
+  for (const taxi of taxis) solids.push(taxi.solid);
+  const hydrants = (data.hydrants ?? []).map(([x, dir]) => new Hydrant(x, dir ?? 1));
+  const geysers = (data.geysers ?? []).map(([x]) => new Geyser(x));
+  const cats = (data.cats ?? []).map(([x]) => new Cat(x));
+  const drones = (data.drones ?? []).map(([x, y, span]) => new Drone(x, y, span));
+  const dumpsters = (data.dumpsters ?? []).map(([x]) => new Dumpster(x));
+  const cranes = (data.cranes ?? []).map(([x, y, range]) => new Crane(x, y, range));
+  for (const crane of cranes) solids.push(crane.solid);
+  const traffic = (data.traffic ?? []).map(([x, width]) => new Traffic(x, width));
 
   const ponds = data.ponds.map(([x, endX]) => ({ x, width: endX - x }));
 
@@ -118,10 +136,14 @@ export function createLevel(index = 0) {
     subtitle: data.subtitle,
     skill: data.skill || '',
     theme: data.theme,
+    world: data.world || 'farm',
+    cityGate: !!data.cityGate,
     width: data.width,
     wind: data.wind || 0,
     solids, lilyPads, frogs, geese, carts, pickups, ponds, checkpoints,
     pigs, bees, moles, crows, bounces, beams,
+    rats, pigeons, taxis, hydrants, geysers,
+    cats, drones, dumpsters, cranes, traffic,
     buildings, animals, goal,
     clouds: scatterClouds(data.width),
   };
