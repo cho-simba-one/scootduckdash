@@ -4,6 +4,7 @@
 
 import { GAME_WIDTH, GAME_HEIGHT } from './constants.js';
 import { Game, STATE } from './game.js';
+import { Input } from './input.js';
 import { isInsideButton } from './titleScreen.js';
 import { setupTouchControls } from './touchControls.js';
 import { setupCheatEntry } from './cheats.js';
@@ -42,6 +43,7 @@ canvas.addEventListener('click', (evt) => {
 let lastTime = performance.now();
 function frame(now) {
   requestAnimationFrame(frame); // scheduled first so an exception below can't kill the loop
+  Input.pollGamepad(); // merge pad state before anything reads Input
   const dtMs = Math.min(now - lastTime, 50); // clamp so a tab-switch stall can't cause a physics blowup
   lastTime = now;
   game.update(dtMs, now);

@@ -1,5 +1,6 @@
 // Title screen: farm backdrop, bobbing hero duck, and a mouse-clickable
-// START button. No keyboard needed here -- purely mouse-driven per spec.
+// START button. Gamepad START / Space also work (handled in game.js);
+// the CONTROLS button below START is drawn by controlsScreen.js.
 
 import { GAME_WIDTH, GAME_HEIGHT } from './constants.js';
 import { renderSky } from './background.js';
@@ -108,6 +109,6 @@ export function render(ctx, nowMs) {
 
   ctx.font = "10px 'Press Start 2P', monospace";
   ctx.fillStyle = '#2a2a2a';
-  ctx.fillText('Arrows to move / jump / duck  -  Space to shoot  -  M mutes', GAME_WIDTH / 2, GAME_HEIGHT - 14);
+  ctx.fillText('Arrows move  -  Space shoot  -  M mute  -  gamepad ready', GAME_WIDTH / 2, GAME_HEIGHT - 6);
   ctx.textAlign = 'left';
 }

@@ -14,6 +14,7 @@ import {
   renderSky, renderBackground, renderTerrain, renderGoal, renderThemeOverlay,
 } from './background.js';
 import * as titleScreen from './titleScreen.js';
+import * as controlsScreen from './controlsScreen.js';
 import { Music } from './music.js';
 import { isGod, isWarp, onGodChange, onWarpChange, requestCheatKeyboard } from './cheats.js';
 
@@ -58,6 +59,10 @@ export class Game {
     this.warpDown = false;
     this.warpHold = 0;
     this.pointer = false;
+    this.showControls = false;
+    this.controlsHover = false;
+    this.keyCWas = false;
+    this.titleShootWas = true; // true so a held Space can't insta-start on load
     onGodChange((on) => {
       if (!on || !this.player) return;
       this.player.dead = false;
@@ -169,7 +174,9 @@ export class Game {
   handleMouseMove(mx, my) {
     this.pointer = false;
     if (this.state === STATE.TITLE) {
-      this.pointer = titleScreen.setHover(mx, my) || titleScreen.isInsideTitle(mx, my);
+      this.controlsHover = controlsScreen.isInsideControlsButton(mx, my);
+      this.pointer = titleScreen.setHover(mx, my) || titleScreen.isInsideTitle(mx, my)
+        || this.controlsHover;
       return;
     }
     if (this.state === STATE.INTRO) {
@@ -186,6 +193,14 @@ export class Game {
   handleClick(mx, my) {
     if (insideRect(mx, my, MUTE_BUTTON)) {
       Music.toggleMute();
+      return;
+    }
+    if (this.showControls && this.state !== STATE.PLAYING) {
+      this.showControls = false; // any tap closes the overlay
+      return;
+    }
+    if (this.state === STATE.TITLE && controlsScreen.isInsideControlsButton(mx, my)) {
+      this.showControls = true;
       return;
     }
     if (this.state === STATE.TITLE && titleScreen.isInsideButton(mx, my)) {
@@ -234,6 +249,29 @@ export class Game {
   }
 
   update(dtMs, nowMs) {
+    // Controls overlay: the C key or a gamepad's SELECT toggles it on any
+    // non-play screen. While open it swallows menu input so START can't
+    // accidentally begin a level underneath it.
+    const keyC = Input.keyDown('KeyC');
+    const togglePressed = (keyC && !this.keyCWas) || Input.selectEdge();
+    this.keyCWas = keyC;
+    if (togglePressed && this.state !== STATE.PLAYING) {
+      this.showControls = !this.showControls;
+    }
+    if (this.showControls && this.state !== STATE.PLAYING) {
+      this.titleShootWas = Input.shoot();
+      return;
+    }
+
+    // Title: a gamepad START / Space begins the game (rising edge only,
+    // so returning from a run with the button held doesn't restart).
+    if (this.state === STATE.TITLE) {
+      const shoot = Input.shoot();
+      if (shoot && !this.titleShootWas) this.startGame();
+      this.titleShootWas = shoot;
+      return;
+    }
+
     // Intro waits on START (click/tap or Space). Level-clear is still timed
     // so the fanfare can finish.
     if (this.state === STATE.INTRO) {
@@ -672,6 +710,8 @@ export class Game {
 
     if (this.state === STATE.TITLE) {
       titleScreen.render(ctx, nowMs);
+      controlsScreen.renderButton(ctx, this.controlsHover);
+      if (this.showControls) controlsScreen.render(ctx);
       drawMuteButton(ctx, Music.muted);
       return;
     }
@@ -734,6 +774,7 @@ export class Game {
       );
     }
     if (this.state === STATE.GAMEOVER) renderEndScreen(ctx, 'GAME OVER', '#e63946');
+    if (this.showControls && this.state !== STATE.PLAYING) controlsScreen.render(ctx);
 
     drawMuteButton(ctx, Music.muted); // always last so it stays on top of overlays
   }
