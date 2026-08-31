@@ -1393,7 +1393,7 @@ export const LEVELS = [
     buildings: [],
     animals: [],
     goal: [200, -72],
-    saves: [[40, 200], [2100, 200], [2100, 58], [300, -12]],
+    saves: [[40, 200], [1500, 200], [1800, 58], [300, -12]],
   },
   {
     name: 'Pie Safe',

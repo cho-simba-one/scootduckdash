@@ -65,7 +65,7 @@ export function createLevel(index = 0) {
     .filter(([x, y, kind]) => kind !== 'egg' || !hasEgg(index))
     .map(([x, y, kind]) => new Pickup(x, y, kind));
 
-  for (const row of data.ground) {
+  for (const row of (data.ground ?? [])) {
     const [x, width, belt] = row;
     const strip = groundStrip(x, width);
     if (belt) strip.belt = belt;
@@ -75,15 +75,15 @@ export function createLevel(index = 0) {
     const [x, width, y, belt] = row;
     solids.push(ledgeStrip(x, width, y, belt));
   }
-  for (const [x, y] of data.hay) solids.push(hayPlatform(x, y));
+  for (const [x, y] of (data.hay ?? [])) solids.push(hayPlatform(x, y));
 
-  for (const [centerX, topY] of data.lilies) {
+  for (const [centerX, topY] of (data.lilies ?? [])) {
     solids.push(lilyPlatform(centerX, topY));
     lilyPads.push({ x: centerX - lilyPadSize.width / 2, y: topY });
   }
 
-  for (const [centerX, topY] of data.frogs) frogs.push(new Frog(centerX, topY));
-  for (const [x, y, patrol] of data.geese) geese.push(new Goose(x, y, patrol));
+  for (const [centerX, topY] of (data.frogs ?? [])) frogs.push(new Frog(centerX, topY));
+  for (const [x, y, patrol] of (data.geese ?? [])) geese.push(new Goose(x, y, patrol));
 
   for (const [x, y, range, axis] of (data.carts ?? [])) {
     const cart = new Cart(x, y, range, axis, data.world || 'farm');
@@ -138,13 +138,13 @@ export function createLevel(index = 0) {
     ? saves.map((s) => s.x)
     : [spawn.x, ...ponds.map((p) => p.x + p.width + 20)];
 
-  const buildings = data.buildings.map(([type, x]) => ({
+  const buildings = (data.buildings ?? []).map(([type, x]) => ({
     type,
     x,
     y: GROUND_Y - (type === 'farmhouse' ? 105 : 95),
   }));
 
-  const animals = data.animals.map(([type, x], i) => ({
+  const animals = (data.animals ?? []).map(([type, x], i) => ({
     type,
     x,
     y: GROUND_Y - (type === 'dog' ? 22 : 18),

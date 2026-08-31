@@ -15,6 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent
 LEVELS_JS = ROOT / "js" / "levels.js"
+MUSIC_JS = ROOT / "js" / "musicData.js"
 
 LILY_W = 42
 HAY_W = 30
@@ -26,6 +27,7 @@ MAX_JUMP_X = 115.6
 MAX_JUMP_H = 79.0
 GROUND_Y = 230
 PLAYER_H = 30
+PLAYER_W = 26
 
 
 def _js_array(blob: str, key: str):
@@ -71,6 +73,7 @@ def parse_levels(text: str) -> list[dict]:
             "carts": _js_array(chunk, "carts") or [],
             "taxis": _js_array(chunk, "taxis") or [],
             "pickups": _js_array(chunk, "pickups") or [],
+            "saves": _js_array(chunk, "saves") or [],
             "spawn": spawn,
             "goal": goal,
             "mill": mill,
@@ -94,11 +97,32 @@ def on_ground(x, lv):
     return False
 
 
-def on_ledge(x, goal_y, lv):
+def on_ledge(x, top_y, lv, box_height=90):
     for row in lv["ledges"]:
         lx, lw, ly, *_rest = row
-        if lx <= x <= lx + lw and abs(goal_y - (ly - 90)) < 8:
+        if lx <= x <= lx + lw and abs(top_y - (ly - box_height)) < 8:
             return True
+    return False
+
+
+def on_hay_bale(x, top_y, lv):
+    for hx, hy in lv["hay"]:
+        if hx <= x <= hx + HAY_W and abs(top_y - (hy - PLAYER_H)) < 8:
+            return True
+    return False
+
+
+def save_supported(x, top_y, lv):
+    """A save's [x, y] is the top-left of the player box (width 26) that
+    gets planted there on respawn -- mirrors how spawn/goal are checked,
+    but also accepts hay bales since mill saves often perch on one."""
+    right = x + PLAYER_W
+    if on_ground(x, lv) and on_ground(right, lv) and abs(top_y - (GROUND_Y - PLAYER_H)) < 8:
+        return True
+    if on_ledge(x, top_y, lv, PLAYER_H) and on_ledge(right, top_y, lv, PLAYER_H):
+        return True
+    if on_hay_bale(x, top_y, lv) and on_hay_bale(right, top_y, lv):
+        return True
     return False
 
 
@@ -118,6 +142,13 @@ def check_level(lv: dict) -> list[str]:
         goal_x = lv["width"] - 120
         if not (last_g[0] <= goal_x <= last_g[0] + last_g[1]):
             fails.append(f"{name}: goal at {goal_x} is not on the last ground strip")
+
+    for sx, sy in lv["saves"]:
+        if not save_supported(sx, sy, lv):
+            fails.append(
+                f"{name}: save at {sx},{sy} is not supported by a ground strip, "
+                f"ledge, or hay bale -- player would spawn floating"
+            )
 
     for pond in lv["ponds"]:
         pads = sorted(cx for cx, _y in lv["lilies"] if pond[0] < cx < pond[1])
@@ -217,11 +248,40 @@ def check_pond(name, a, b, lv) -> list[str]:
     return fails
 
 
+def parse_track_count(text: str) -> int:
+    """Count entries in `export const TRACKS = [ ... ];` in musicData.js."""
+    marker = "export const TRACKS = ["
+    start = text.find(marker)
+    if start < 0:
+        raise SystemExit("could not find 'export const TRACKS = [' in musicData.js")
+    i = start + len(marker) - 1  # index of the opening '['
+    depth = 0
+    for j in range(i, len(text)):
+        if text[j] == "[":
+            depth += 1
+        elif text[j] == "]":
+            depth -= 1
+            if depth == 0:
+                raw = text[i + 1 : j]
+                break
+    else:
+        raise SystemExit("unclosed TRACKS array in musicData.js")
+    return len([t for t in raw.split(",") if t.strip()])
+
+
 def main():
     levels = parse_levels(LEVELS_JS.read_text(encoding="utf-8"))
     if len(levels) < 40:
         raise SystemExit(f"expected at least 40 levels, parsed {len(levels)}")
     fails = []
+
+    track_count = parse_track_count(MUSIC_JS.read_text(encoding="utf-8"))
+    if track_count != len(levels):
+        fails.append(
+            f"musicData.js TRACKS has {track_count} entries but levels.js has "
+            f"{len(levels)} levels -- add or remove a track so they match"
+        )
+
     for lv in levels:
         fails.extend(check_level(lv))
         print(f"  {lv['name']}: width={lv['width']} ponds={len(lv['ponds'])} "

@@ -2,10 +2,13 @@
 // from tapping the title duck. Nothing here writes gameplay rules -- it just
 // remembers what the player already found.
 
+import { LEVELS } from './levels.js';
+
 const EGG_KEY = 'duckDashEggs';
 
-// Internal only -- the HUD never prints this. Bump when a world adds eggs.
-export const EGG_TOTAL = 25;
+// Internal only -- the HUD never prints this. Derived from level data so it
+// can never drift out of sync with the levels that actually contain eggs.
+export const EGG_TOTAL = LEVELS.filter((l) => (l.pickups ?? []).some((p) => p[2] === 'egg')).length;
 
 export function foundEggs() {
   try {

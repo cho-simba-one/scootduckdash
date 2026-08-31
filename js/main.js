@@ -41,11 +41,11 @@ canvas.addEventListener('click', (evt) => {
 
 let lastTime = performance.now();
 function frame(now) {
+  requestAnimationFrame(frame); // scheduled first so an exception below can't kill the loop
   const dtMs = Math.min(now - lastTime, 50); // clamp so a tab-switch stall can't cause a physics blowup
   lastTime = now;
   game.update(dtMs, now);
   game.render(now);
   touchControls.setVisible(game.state === STATE.PLAYING);
-  requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

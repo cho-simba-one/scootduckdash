@@ -26,7 +26,14 @@ def main():
         sys.exit("could not find APP_SHELL in service-worker.js")
     listed = set(re.findall(r"'\./js/([^']+)'", block.group(1)))
 
-    on_disk = {f for f in os.listdir(JS_DIR) if f.endswith(".js")}
+    on_disk = set()
+    for root, _dirs, files in os.walk(JS_DIR):
+        rel_root = os.path.relpath(root, JS_DIR)
+        for f in files:
+            if not f.endswith(".js"):
+                continue
+            rel_path = f if rel_root == "." else os.path.join(rel_root, f)
+            on_disk.add(rel_path.replace(os.sep, "/"))
 
     missing = sorted(on_disk - listed)   # on disk but not precached
     stale = sorted(listed - on_disk)     # precached but gone -> breaks install
