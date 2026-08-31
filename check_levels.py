@@ -178,21 +178,38 @@ def check_level(lv: dict) -> list[str]:
                         f"(dx={dx:.0f} rise={rise:.0f}) -- lift skip"
                     )
 
-    for hx, hy in lv["hay"]:
-        if GROUND_Y - hy > MAX_JUMP_H + 1:
-            # Must be reachable from another hay, not only from the floor.
-            if not any(
-                other is not (hx, hy)
-                and abs((other[0] + HAY_W / 2) - (hx + HAY_W / 2)) < MAX_JUMP_X
-                and 0 <= other[1] - hy <= MAX_JUMP_H
-                for other in lv["hay"]
-            ):
-                # First hay on a strip can still be 79px off the ground.
-                if GROUND_Y - hy > MAX_JUMP_H:
-                    fails.append(
-                        f"{name}: hay at {hx},{hy} is {GROUND_Y - hy}px above ground "
-                        f"(max jump height {MAX_JUMP_H})"
-                    )
+    # NOTE: there is deliberately NO hay-reachability check. The original
+    # one compared each bale to a fresh tuple with `is not`, so every bale
+    # "reached itself" and it never fired once -- and fixing the comparison
+    # revealed why that went unnoticed: shipped, completable levels contain
+    # 6+ bales that are flat-jump unreachable on purpose (scenery and frog
+    # perches, e.g. Farmyard Frolic's 1480,130 has a frog ON it). Bale
+    # reachability is not an invariant of this game's data; do not
+    # reintroduce a check for a rule the game does not follow. Player-
+    # critical platforms are validated where they ARE invariants: pond
+    # crossings above, saves/goal support, and boss perch ledges below.
+
+    # Boss-arena perches: negative-y ledges must be honest jumps, not
+    # frame-perfect ones. Requires a surface below (ground or lower ledge)
+    # within a 65px rise (79px apex minus landing margin) and a forgiving
+    # 90px-plus landing width.
+    for lx, lw, ly, *_r in lv["ledges"]:
+        if ly >= 0:
+            continue
+        supports = [GROUND_Y - ly]
+        for ox, ow, oy, *_o in lv["ledges"]:
+            if oy > ly and ox < lx + lw and ox + ow > lx:
+                supports.append(oy - ly)
+        if min(supports) > MAX_JUMP_H - 14:
+            fails.append(
+                f"{name}: perch ledge at {lx},{ly} needs a {min(supports)}px rise "
+                f"(max honest jump {MAX_JUMP_H - 14:.0f}) -- unreachable in practice"
+            )
+        if lw < 90:
+            fails.append(
+                f"{name}: perch ledge at {lx},{ly} is only {lw}px wide -- "
+                f"needs >= 90 for a forgiving landing"
+            )
     return fails
 
 

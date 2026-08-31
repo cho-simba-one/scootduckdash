@@ -1404,12 +1404,13 @@ export const LEVELS = [
     width: 4400,
     theme: THEMES.millFair,
     spawn: [2200, 200],
+    // The three negative-y ledges are the boss-arena dodge perches: wide
+    // catwalk strips (130px -- a 30px hay bale was a near-frame-perfect
+    // landing), rises of 58-62px against the 79px jump apex, and high
+    // enough that a perched duck clears the Foreman's head-down charge.
     ground: [[0, 600], [1000, 500], [1900, 800], [3100, 500], [3900, 500]],
-    ledges: [[80, 2300, 88], [80, 1400, 18]],
-    // The three arena bales (negative y) are dodge perches for the boss
-    // fight: high enough to clear his head-down charge, low enough to
-    // reach from the ledge inside the jump budget.
-    hay: [[2080, 158], [2200, 158], [2320, 158], [420, -40], [770, -56], [1120, -40]],
+    ledges: [[80, 2300, 88], [80, 1400, 18], [340, 130, -40], [690, 130, -44], [1040, 130, -40]],
+    hay: [[2080, 158], [2200, 158], [2320, 158]],
     ponds: [[600, 1000], [1500, 1900], [2700, 3100], [3600, 3900]],
     lilies: [
       [660, 195], [760, 190], [860, 195], [940, 195],

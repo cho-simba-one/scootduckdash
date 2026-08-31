@@ -576,9 +576,12 @@ export class Game {
             player.stompBounce(); // hard hat: safe pogo, zero damage
             boss.deflect();
             Music.play('bounce');
-          } else {
+          } else if (stompDepth > bossBox.height * 0.3) {
             player.takeDamage(nowMs, boss.x);
           }
+          // Shallow standing contact (his hat brushing a perched duck's
+          // feet as he walks under) is free -- perches must be safe from
+          // everything except the attacks that are MEANT to flush you off.
         }
         for (const shot of this.projectiles) {
           if (!shot.dead && overlaps(shot.getHitbox(), bossBox)) {
