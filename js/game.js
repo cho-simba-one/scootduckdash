@@ -8,7 +8,7 @@ import { Input } from './input.js';
 import { Player, overlaps } from './player.js';
 import { Pickup } from './pickups.js';
 import { Camera } from './camera.js';
-import { createLevel, LEVEL_COUNT, STAGE_NAMES } from './level.js';
+import { createLevel, LEVEL_COUNT, STAGE_NAMES, STAGE_LABELS } from './level.js';
 import { markEgg, consumeLuckyRun, eggCount, allEggsFound } from './secrets.js';
 import {
   renderSky, renderBackground, renderTerrain, renderGoal, renderThemeOverlay,
@@ -809,7 +809,7 @@ export class Game {
       }
     }
     if (this.state === STATE.LEVEL_CLEAR) {
-      renderCard(ctx, 'LEVEL CLEAR!', level.name, '+1 heart');
+      renderCard(ctx, 'LEVEL CLEAR!', level.label, '+1 heart');
     }
     if (this.state === STATE.WIN) {
       renderEndScreen(
@@ -906,7 +906,7 @@ function renderWarpPanel(ctx, game, startHover) {
       ctx.fillStyle = '#cdeeff';
     }
     ctx.font = "8px 'Press Start 2P', monospace";
-    ctx.fillText(STAGE_NAMES[idx], GAME_WIDTH / 2, rowY + 15);
+    ctx.fillText(STAGE_LABELS[idx], GAME_WIDTH / 2, rowY + 15);
   }
 
   ctx.fillStyle = '#8ecae6';
@@ -954,7 +954,7 @@ function renderIntro(ctx, level, hover) {
 
   ctx.fillStyle = '#ffd23f';
   ctx.font = "12px 'Press Start 2P', monospace";
-  ctx.fillText(level.name, GAME_WIDTH / 2, y);
+  ctx.fillText(level.label, GAME_WIDTH / 2, y);
   y += 20;
 
   ctx.fillStyle = '#ffffff';
@@ -1078,7 +1078,7 @@ function renderHud(ctx, player, level) {
   // is how two earlier attempts at this landed inside the heart).
   ctx.font = "8px 'Press Start 2P', monospace";
   ctx.fillStyle = 'rgba(0,0,0,0.65)';
-  ctx.fillText(level.name, 16, 66);
+  ctx.fillText(level.label, 16, 66);
   if (eggCount() > 0) {
     ctx.fillStyle = '#e0b23a';
     ctx.fillText(`EGGS ${eggCount()}`, 16, 80);
