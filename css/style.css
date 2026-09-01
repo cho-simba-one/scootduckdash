@@ -10,7 +10,12 @@ html, body {
 #game-frame {
   position: relative;
   width: 100vw;
+  /* dvh tracks the phone's SHRINKING viewport as the address bar slides in
+     and out. With plain vh the frame stays taller than what's visible, so
+     the top of the canvas -- where the hearts live -- sits underneath the
+     address bar. vh first as the fallback for old browsers. */
   height: 100vh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,6 +50,10 @@ html, body {
   aspect-ratio: 480 / 270;
   width: min(100vw, 177.78vh);
   height: min(100vh, 56.25vw);
+  /* Same dvh story as the frame: size against the visible viewport so the
+     HUD row is never hidden behind mobile browser chrome. */
+  width: min(100vw, 177.78dvh);
+  height: min(100dvh, 56.25vw);
   border: 4px solid #000;
   box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
   cursor: default;

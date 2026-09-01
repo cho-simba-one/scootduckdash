@@ -68,14 +68,14 @@ function faceButton(ctx, cx, cy, color, letter) {
   ctx.textAlign = 'left';
 }
 
-export function render(ctx) {
+export function render(ctx, paused = false) {
   ctx.fillStyle = 'rgba(0,0,0,0.82)';
   ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
   ctx.textAlign = 'center';
   ctx.fillStyle = '#ffd23f';
   ctx.font = "14px 'Press Start 2P', monospace";
-  ctx.fillText('CONTROLS', GAME_WIDTH / 2, 28);
+  ctx.fillText(paused ? 'PAUSED' : 'CONTROLS', GAME_WIDTH / 2, 28);
 
   // --- Pad body -------------------------------------------------------
   const padX = 90;

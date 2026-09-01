@@ -74,6 +74,11 @@ def parse_levels(text: str) -> list[dict]:
             "taxis": _js_array(chunk, "taxis") or [],
             "pickups": _js_array(chunk, "pickups") or [],
             "saves": _js_array(chunk, "saves") or [],
+            # Parsed for reach_audit's pad-assisted jumps. Without this the
+            # audit silently treats every bounce flower as absent, so a
+            # route that only works off a pad reads as unreachable.
+            "bounces": _js_array(chunk, "bounces") or [],
+            "beams": _js_array(chunk, "beams") or [],
             "spawn": spawn,
             "goal": goal,
             "mill": mill,

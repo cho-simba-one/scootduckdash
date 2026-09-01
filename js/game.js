@@ -23,6 +23,10 @@ const HUD_HEARTS = { x: 8, y: 6, width: 86, height: 28 };
 
 const RESTART_BUTTON = { x: GAME_WIDTH / 2 - 90, y: 160, width: 180, height: 40 };
 const MUTE_BUTTON = { x: GAME_WIDTH - 34, y: 8, width: 26, height: 22 };
+// Always on screen, next to mute, in EVERY state including play. On a
+// phone the CONTROLS screen used to be title-only, so exiting fullscreen
+// (which the OS keyboard does by itself) left no way back in.
+const MENU_BUTTON = { x: GAME_WIDTH - 66, y: 8, width: 26, height: 22 };
 const LEVEL_START_BUTTON = { x: GAME_WIDTH / 2 - 70, y: 214, width: 140, height: 36 };
 const WARP_START_BUTTON = { x: GAME_WIDTH / 2 - 70, y: 214, width: 140, height: 36 };
 const WARP_LIST = { x: 24, y: 36, width: GAME_WIDTH - 48, rowH: 22, rows: 6 };
@@ -172,6 +176,13 @@ export class Game {
     this.state = STATE.TITLE;
   }
 
+  /** Open/close the CONTROLS overlay. Open during play == paused. */
+  toggleControls() {
+    this.showControls = !this.showControls;
+    // Don't let the press that closed the menu also fire a propeller shot.
+    if (!this.showControls && this.state === STATE.PLAYING) this.ignoreShoot = true;
+  }
+
   /**
    * F / T, handled only while the CONTROLS overlay is open. Called straight
    * from the keydown listener rather than the frame loop because
@@ -180,7 +191,7 @@ export class Game {
    * Returns true if the key was consumed.
    */
   handleSettingsKey(code) {
-    if (!this.showControls || this.state === STATE.PLAYING) return false;
+    if (!this.showControls) return false;
     if (code === 'KeyF') {
       toggleFullscreen();
       return true;
@@ -216,7 +227,12 @@ export class Game {
       Music.toggleMute();
       return;
     }
-    if (this.showControls && this.state !== STATE.PLAYING) {
+    // Menu chip is live in every state, and outranks everything below it.
+    if (insideRect(mx, my, MENU_BUTTON)) {
+      this.toggleControls();
+      return;
+    }
+    if (this.showControls) {
       // Setting rows first -- a tap ANYWHERE else closes the overlay.
       const row = controlsScreen.rowAt(mx, my);
       if (row === 'fullscreen') {
@@ -227,7 +243,7 @@ export class Game {
         cycleTouchMode();
         return;
       }
-      this.showControls = false;
+      this.toggleControls();
       return;
     }
     if (this.state === STATE.TITLE && controlsScreen.isInsideControlsButton(mx, my)) {
@@ -286,10 +302,10 @@ export class Game {
     const keyC = Input.keyDown('KeyC');
     const togglePressed = (keyC && !this.keyCWas) || Input.selectEdge();
     this.keyCWas = keyC;
-    if (togglePressed && this.state !== STATE.PLAYING) {
-      this.showControls = !this.showControls;
-    }
-    if (this.showControls && this.state !== STATE.PLAYING) {
+    if (togglePressed) this.toggleControls();
+    // Open in PLAYING means paused: returning here skips physics entirely,
+    // so the world is frozen rather than running behind the overlay.
+    if (this.showControls) {
       this.titleShootWas = Input.shoot();
       return;
     }
@@ -732,7 +748,9 @@ export class Game {
       }
     }
 
-    this.camera.follow(player.x, player.y, player.facing);
+    // Grounded state drives the camera's Y anchor: a jump must not scroll
+    // the floor you launched from off the screen.
+    this.camera.follow(player.x, player.y, player.facing, player.grounded, dtMs);
   }
 
   render(nowMs) {
@@ -744,6 +762,7 @@ export class Game {
       controlsScreen.renderButton(ctx, this.controlsHover);
       if (this.showControls) controlsScreen.render(ctx);
       drawMuteButton(ctx, Music.muted);
+      drawMenuButton(ctx);
       return;
     }
 
@@ -805,9 +824,10 @@ export class Game {
       );
     }
     if (this.state === STATE.GAMEOVER) renderEndScreen(ctx, 'GAME OVER', '#e63946');
-    if (this.showControls && this.state !== STATE.PLAYING) controlsScreen.render(ctx);
+    if (this.showControls) controlsScreen.render(ctx, this.state === STATE.PLAYING);
 
     drawMuteButton(ctx, Music.muted); // always last so it stays on top of overlays
+    drawMenuButton(ctx);
   }
 }
 
@@ -850,7 +870,8 @@ function warpRowAt(my, scroll) {
 }
 
 function warpCaretAt(mx, my) {
-  if (insideRect(mx, my, HUD_HEARTS) || insideRect(mx, my, MUTE_BUTTON)) return null;
+  if (insideRect(mx, my, HUD_HEARTS) || insideRect(mx, my, MUTE_BUTTON)
+      || insideRect(mx, my, MENU_BUTTON)) return null;
   const { y, rowH, rows } = WARP_LIST;
   if (my >= 18 && my < y) return 'up';
   if (my >= y + rows * rowH && my < WARP_START_BUTTON.y - 4) return 'down';
@@ -1012,6 +1033,17 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
     yy += lineHeight;
   }
   return yy;
+}
+
+/** Three bars: the universal "menu" glyph, drawn to match the mute chip. */
+function drawMenuButton(ctx) {
+  const b = MENU_BUTTON;
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(b.x, b.y, b.width, b.height);
+  ctx.fillStyle = '#ffd23f';
+  for (let i = 0; i < 3; i++) {
+    ctx.fillRect(b.x + 6, b.y + 6 + i * 5, b.width - 12, 2);
+  }
 }
 
 function drawMuteButton(ctx, muted) {
