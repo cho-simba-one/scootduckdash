@@ -79,7 +79,9 @@ html, body {
    decides whether they're visible is settings.touchPadsVisible() (AUTO =
    touchscreens only, ON = always, OFF = never) ---------------------------- */
 #touch-controls {
-  position: fixed;
+  /* absolute, not fixed: the pads are parented to #game-frame so they
+     survive fullscreen, and the frame already fills the viewport. */
+  position: absolute;
   inset: 0;
   display: flex;
   justify-content: space-between;

@@ -31,7 +31,10 @@ export function setupTouchControls() {
     </div>
   `;
   root.classList.add('hidden'); // frame loop flips this on once gameplay actually starts
-  document.body.appendChild(root);
+  // MUST live inside #game-frame: that is the element that goes fullscreen,
+  // and fullscreen renders only that element and its DESCENDANTS. Parented
+  // to <body> the pads were simply not drawn once fullscreen was on.
+  (document.getElementById('game-frame') || document.body).appendChild(root);
 
   root.querySelectorAll('.tc-btn').forEach((btn) => {
     const action = btn.dataset.action;
