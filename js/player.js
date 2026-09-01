@@ -3,7 +3,7 @@ import {
   PLAYER_MAX_SPEED, PLAYER_DUCK_MAX_SPEED, PLAYER_JUMP_VELOCITY,
   PLAYER_STOMP_BOUNCE, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_DUCK_HEIGHT,
   PLAYER_MAX_HEARTS, PLAYER_INVINCIBLE_MS, PROJECTILE_COOLDOWN_MS,
-  WHIP_DURATION_MS, WHIP_POP, WHIP_SPEED_BONUS, WHIP_MAX_SPEED,
+  WHIP_DURATION_MS, WHIP_POP, WHIP_SPEED_BONUS, WHIP_MAX_SPEED, WHIP_MAX_PER_JUMP,
   WHIP_GRAVITY_MUL, WHIP_REACH,
 } from './constants.js';
 import { DUCK_IDLE, DUCK_RUN1, DUCK_RUN2, DUCK_JUMP, DUCK_DUCK, DUCK_WHIP, withWhiteEye } from './sprites.js';
@@ -29,9 +29,10 @@ export class Player {
     this.animFrame = 0;
     this.dead = false;
     this.whipTimer = 0;
-    this.whipUsed = false;
+    this.whipsUsed = 0; // per airborne period, reset on landing
     this.whipStarted = false;
     this.wasDown = false;
+    this.wasUp = true;  // true so the press that STARTED the jump can't whip
   }
 
   get width() {
@@ -97,13 +98,15 @@ export class Player {
 
     const down = Input.down();
     const downPressed = down && !this.wasDown;
+    const up = Input.up();
+    const upPressed = up && !this.wasUp;
     const duckDelta = PLAYER_HEIGHT - PLAYER_DUCK_HEIGHT;
 
     // Ducking can only start/stop while grounded -- classic Mario rule.
     // Grow/shrink FROM THE FEET so a lily pad doesn't vanish under you.
     if (this.grounded) {
       this.whipTimer = 0;
-      this.whipUsed = false;
+      this.whipsUsed = 0;
       if (down && !this.ducking) {
         this.y += duckDelta;
         this.ducking = true;
@@ -119,9 +122,13 @@ export class Player {
         this.y -= duckDelta;
         this.ducking = false;
       }
-      // Fresh tap in the air -- holding Down from a crouch must not auto-whip.
-      if (allowWhip && !this.whipUsed && downPressed) {
-        this.whipUsed = true;
+      // Double-jump input: tap jump AGAIN in the air to whip, up to
+      // WHIP_MAX_PER_JUMP times. Down still whips too -- it is the older
+      // input and the touch pad has a dedicated duck button. Both require
+      // a FRESH tap, so holding the button from take-off (or from a
+      // crouch) can never auto-whip.
+      if (allowWhip && this.whipsUsed < WHIP_MAX_PER_JUMP && (upPressed || downPressed)) {
+        this.whipsUsed += 1;
         this.whipTimer = WHIP_DURATION_MS;
         this.whipStarted = true;
         this.vy += WHIP_POP;
@@ -129,6 +136,7 @@ export class Player {
       }
     }
     this.wasDown = down;
+    this.wasUp = up;
 
     if (this.whipTimer > 0) this.whipTimer -= dtMs;
 
@@ -150,7 +158,7 @@ export class Player {
     this.vx = Math.max(-maxSpeed, Math.min(maxSpeed, this.vx));
 
     // --- Jump ------------------------------------------------------------
-    if (Input.up() && this.grounded && !this.ducking) {
+    if (up && this.grounded && !this.ducking) {
       this.vy = PLAYER_JUMP_VELOCITY;
       this.grounded = false;
     }

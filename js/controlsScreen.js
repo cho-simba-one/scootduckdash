@@ -10,8 +10,8 @@ export const CONTROLS_BUTTON = { x: GAME_WIDTH / 2 - 70, y: 232, width: 140, hei
 // Tappable setting rows inside the overlay. game.js maps a hit to the
 // matching action; the labels are drawn from live settings state.
 const ROWS = {
-  fullscreen: { x: 60, y: 186, width: 170, height: 22 },
-  touch: { x: 250, y: 186, width: 170, height: 22 },
+  fullscreen: { x: 60, y: 198, width: 170, height: 22 },
+  touch: { x: 250, y: 198, width: 170, height: 22 },
 };
 
 /** Which setting row (if any) is under the pointer: 'fullscreen'|'touch'|null. */
@@ -114,9 +114,10 @@ export function render(ctx, paused = false) {
   // --- Mapping text ---------------------------------------------------
   ctx.font = "8px 'Press Start 2P', monospace";
   ctx.fillStyle = '#ffffff';
-  ctx.fillText('B JUMP   A DUCK + TAIL WHIP   Y/X SHOOT', GAME_WIDTH / 2, 168);
+  ctx.fillText('B JUMP - TAP AGAIN IN AIR = TAIL WHIP x3', GAME_WIDTH / 2, 166);
   ctx.fillStyle = '#8ecae6';
-  ctx.fillText('KEYS: ARROWS MOVE   SPACE SHOOT   M MUTE', GAME_WIDTH / 2, 180);
+  ctx.fillText('A DUCK   Y/X SHOOT   START GO   SELECT MENU', GAME_WIDTH / 2, 177);
+  ctx.fillText('KEYS: ARROWS MOVE  UP UP = WHIP  SPACE SHOOT', GAME_WIDTH / 2, 188);
 
   // --- Tappable settings ----------------------------------------------
   settingRow(ctx, ROWS.fullscreen, 'FULLSCREEN', fullscreenSupported()
@@ -127,8 +128,8 @@ export function render(ctx, paused = false) {
   ctx.textAlign = 'center';
   ctx.fillStyle = '#9aa0a8';
   ctx.font = "6px 'Press Start 2P', monospace";
-  ctx.fillText('TOUCH PADS: AUTO SHOWS THEM ON TOUCHSCREENS ONLY', GAME_WIDTH / 2, 232);
-  ctx.fillText('START OR SELECT ON A PAD  -  SNES LAYOUT SHOWN', GAME_WIDTH / 2, 244);
+  ctx.fillText('TOUCH PADS: AUTO SHOWS THEM ON TOUCHSCREENS ONLY', GAME_WIDTH / 2, 234);
+  ctx.fillText('START OR SELECT ON A PAD  -  SNES LAYOUT SHOWN', GAME_WIDTH / 2, 246);
   ctx.fillStyle = '#ffd23f';
   ctx.fillText('TAP ELSEWHERE, C, OR SELECT TO CLOSE', GAME_WIDTH / 2, 258);
   ctx.textAlign = 'left';

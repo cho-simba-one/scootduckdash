@@ -19,6 +19,10 @@ export const PLAYER_PAD_BOUNCE = -11.4; // flower pads -- enough extra height to
 
 // Tail-whip (travel world and later): kick the deck around the stem.
 // Farm/city never arm it. A later ground-slam will reuse a full-body spin.
+// Whips per airborne period. Tap jump again in mid-air to whip -- the
+// classic double-jump input. Three because landing a hit on a boss with a
+// single mid-air window was, in the Captain's words, annoying af.
+export const WHIP_MAX_PER_JUMP = 3;
 export const WHIP_DURATION_MS = 220;
 export const WHIP_POP = -1.35;
 export const WHIP_SPEED_BONUS = 0.55;
