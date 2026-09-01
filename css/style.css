@@ -50,8 +50,25 @@ html, body {
   cursor: default;
 }
 
-/* --- On-screen touch controls (phones/tablets only -- see touchControls.js,
-   which only injects this DOM at all on touch-capable devices) ------------ */
+/* Fullscreen (CONTROLS screen, F key). The frame becomes the whole screen,
+   and the canvas drops its border/shadow so the picture goes edge to edge
+   -- its vw/vh sizing already resolves against the fullscreen viewport. */
+#game-frame:fullscreen,
+#game-frame:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  background: #101418;
+}
+
+#game-frame:fullscreen #game-canvas,
+#game-frame:-webkit-full-screen #game-canvas {
+  border: 0;
+  box-shadow: none;
+}
+
+/* --- On-screen touch controls. The DOM is injected on every device; what
+   decides whether they're visible is settings.touchPadsVisible() (AUTO =
+   touchscreens only, ON = always, OFF = never) ---------------------------- */
 #touch-controls {
   position: fixed;
   inset: 0;

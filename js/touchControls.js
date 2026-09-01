@@ -1,23 +1,21 @@
 // On-screen touch controls for phones/tablets (or any coarse-pointer
 // device). Mirrors the keyboard 1:1 via Input.pressVirtual/releaseVirtual
 // (see input.js) so gameplay code never has to know or care where a press
-// came from. Only injected into the DOM on touch-capable devices -- desktop
-// keyboard players never see it.
+// came from.
+//
+// The DOM is always injected, on every device: whether it's actually
+// SHOWN is settings.touchPadsVisible()'s call, so a player can force the
+// pads on (touchscreen laptop) or off (phone with a gamepad) from the
+// CONTROLS screen. Deciding visibility here as well would be the same
+// rule in two places.
 
 import { Input } from './input.js';
+import { isTouchDevice } from './settings.js';
 
-function isTouchDevice() {
-  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-}
-
-/** Injects the on-screen control buttons (no-op if not a touch device or
- * already set up). Returns a `setVisible(bool)` you can call each frame to
- * show/hide the whole cluster (e.g. hide it on the title/win/gameover
- * screens where it'd just be clutter over menu buttons). */
+/** Injects the on-screen control buttons. Returns a `setVisible(bool)`
+ * called each frame with the current preference + play state. */
 export function setupTouchControls() {
-  if (!isTouchDevice()) return { setVisible: () => {} };
-
-  document.body.classList.add('touch-device');
+  if (isTouchDevice()) document.body.classList.add('touch-device');
 
   const root = document.createElement('div');
   root.id = 'touch-controls';

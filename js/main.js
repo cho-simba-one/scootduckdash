@@ -8,6 +8,7 @@ import { Input } from './input.js';
 import { isInsideButton } from './titleScreen.js';
 import { setupTouchControls } from './touchControls.js';
 import { setupCheatEntry } from './cheats.js';
+import { touchPadsVisible } from './settings.js';
 
 const canvas = document.getElementById('game-canvas');
 canvas.width = GAME_WIDTH;
@@ -40,6 +41,12 @@ canvas.addEventListener('click', (evt) => {
   game.handleClick(x, y);
 });
 
+// Settings keys go straight through the real keydown event: fullscreen is
+// only granted from a user gesture, and the frame loop is not one.
+window.addEventListener('keydown', (evt) => {
+  if (game.handleSettingsKey(evt.code)) evt.preventDefault();
+});
+
 let lastTime = performance.now();
 function frame(now) {
   requestAnimationFrame(frame); // scheduled first so an exception below can't kill the loop
@@ -48,6 +55,6 @@ function frame(now) {
   lastTime = now;
   game.update(dtMs, now);
   game.render(now);
-  touchControls.setVisible(game.state === STATE.PLAYING);
+  touchControls.setVisible(touchPadsVisible(game.state === STATE.PLAYING));
 }
 requestAnimationFrame(frame);

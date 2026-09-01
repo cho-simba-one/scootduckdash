@@ -3,8 +3,24 @@
 // the C key, or a gamepad's SELECT button).
 
 import { GAME_WIDTH, GAME_HEIGHT } from './constants.js';
+import { touchMode, isFullscreen, fullscreenSupported } from './settings.js';
 
 export const CONTROLS_BUTTON = { x: GAME_WIDTH / 2 - 70, y: 232, width: 140, height: 20 };
+
+// Tappable setting rows inside the overlay. game.js maps a hit to the
+// matching action; the labels are drawn from live settings state.
+const ROWS = {
+  fullscreen: { x: 60, y: 186, width: 170, height: 22 },
+  touch: { x: 250, y: 186, width: 170, height: 22 },
+};
+
+/** Which setting row (if any) is under the pointer: 'fullscreen'|'touch'|null. */
+export function rowAt(mx, my) {
+  for (const [name, r] of Object.entries(ROWS)) {
+    if (mx >= r.x && mx <= r.x + r.width && my >= r.y && my <= r.y + r.height) return name;
+  }
+  return null;
+}
 
 export function isInsideControlsButton(mx, my) {
   const b = CONTROLS_BUTTON;
@@ -98,15 +114,43 @@ export function render(ctx) {
   // --- Mapping text ---------------------------------------------------
   ctx.font = "8px 'Press Start 2P', monospace";
   ctx.fillStyle = '#ffffff';
-  ctx.fillText('B JUMP   A DUCK + TAIL WHIP   Y/X SHOOT', GAME_WIDTH / 2, 178);
-  ctx.fillText('START GO   SELECT THIS SCREEN', GAME_WIDTH / 2, 194);
+  ctx.fillText('B JUMP   A DUCK + TAIL WHIP   Y/X SHOOT', GAME_WIDTH / 2, 168);
   ctx.fillStyle = '#8ecae6';
-  ctx.fillText('KEYS: ARROWS MOVE+JUMP+DUCK  SPACE SHOOT', GAME_WIDTH / 2, 216);
-  ctx.fillText('M MUTE   C THIS SCREEN', GAME_WIDTH / 2, 230);
+  ctx.fillText('KEYS: ARROWS MOVE   SPACE SHOOT   M MUTE', GAME_WIDTH / 2, 180);
+
+  // --- Tappable settings ----------------------------------------------
+  settingRow(ctx, ROWS.fullscreen, 'FULLSCREEN', fullscreenSupported()
+    ? (isFullscreen() ? 'ON' : 'OFF')
+    : 'N/A', 'F');
+  settingRow(ctx, ROWS.touch, 'TOUCH PADS', touchMode().toUpperCase(), 'T');
+
+  ctx.textAlign = 'center';
   ctx.fillStyle = '#9aa0a8';
   ctx.font = "6px 'Press Start 2P', monospace";
-  ctx.fillText('PHONE: TOUCH PADS APPEAR IN PLAY  -  SNES LAYOUT SHOWN', GAME_WIDTH / 2, 246);
+  ctx.fillText('TOUCH PADS: AUTO SHOWS THEM ON TOUCHSCREENS ONLY', GAME_WIDTH / 2, 232);
+  ctx.fillText('START OR SELECT ON A PAD  -  SNES LAYOUT SHOWN', GAME_WIDTH / 2, 244);
   ctx.fillStyle = '#ffd23f';
-  ctx.fillText('TAP, C, OR SELECT TO CLOSE', GAME_WIDTH / 2, 260);
+  ctx.fillText('TAP ELSEWHERE, C, OR SELECT TO CLOSE', GAME_WIDTH / 2, 258);
+  ctx.textAlign = 'left';
+}
+
+/** One tappable "LABEL  [VALUE]  key" row. */
+function settingRow(ctx, r, label, value, key) {
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
+  ctx.fillRect(r.x, r.y, r.width, r.height);
+  ctx.strokeStyle = '#ffd23f';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(r.x, r.y, r.width, r.height);
+
+  ctx.textAlign = 'left';
+  ctx.font = "7px 'Press Start 2P', monospace";
+  ctx.fillStyle = '#cdeeff';
+  ctx.fillText(label, r.x + 6, r.y + 14);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = value === 'OFF' || value === 'N/A' ? '#9aa0a8' : '#ffd23f';
+  ctx.fillText(value, r.x + r.width - 16, r.y + 14);
+  ctx.fillStyle = '#63b56b';
+  ctx.font = "6px 'Press Start 2P', monospace";
+  ctx.fillText(key, r.x + r.width - 4, r.y + 14);
   ctx.textAlign = 'left';
 }

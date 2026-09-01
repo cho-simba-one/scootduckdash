@@ -17,6 +17,7 @@ import * as titleScreen from './titleScreen.js';
 import * as controlsScreen from './controlsScreen.js';
 import { Music } from './music.js';
 import { isGod, isWarp, onGodChange, onWarpChange, requestCheatKeyboard } from './cheats.js';
+import { toggleFullscreen, cycleTouchMode } from './settings.js';
 
 const HUD_HEARTS = { x: 8, y: 6, width: 86, height: 28 };
 
@@ -171,6 +172,26 @@ export class Game {
     this.state = STATE.TITLE;
   }
 
+  /**
+   * F / T, handled only while the CONTROLS overlay is open. Called straight
+   * from the keydown listener rather than the frame loop because
+   * requestFullscreen needs a live user gesture -- and scoping it to the
+   * open overlay keeps F from firing while someone types IDKFA.
+   * Returns true if the key was consumed.
+   */
+  handleSettingsKey(code) {
+    if (!this.showControls || this.state === STATE.PLAYING) return false;
+    if (code === 'KeyF') {
+      toggleFullscreen();
+      return true;
+    }
+    if (code === 'KeyT') {
+      cycleTouchMode();
+      return true;
+    }
+    return false;
+  }
+
   handleMouseMove(mx, my) {
     this.pointer = false;
     if (this.state === STATE.TITLE) {
@@ -196,7 +217,17 @@ export class Game {
       return;
     }
     if (this.showControls && this.state !== STATE.PLAYING) {
-      this.showControls = false; // any tap closes the overlay
+      // Setting rows first -- a tap ANYWHERE else closes the overlay.
+      const row = controlsScreen.rowAt(mx, my);
+      if (row === 'fullscreen') {
+        toggleFullscreen(); // a click is a user gesture, which this needs
+        return;
+      }
+      if (row === 'touch') {
+        cycleTouchMode();
+        return;
+      }
+      this.showControls = false;
       return;
     }
     if (this.state === STATE.TITLE && controlsScreen.isInsideControlsButton(mx, my)) {
