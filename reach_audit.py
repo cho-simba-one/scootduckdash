@@ -128,16 +128,21 @@ def jump_window(a, b, pad_launch=False, obstacles=()):
     with a 4px window is not a route, it is a lottery."""
     _, aleft, aright, atop, _alow = a
     vy0 = PAD_V if pad_launch else JUMP_V
-    toward = 1 if b[1] >= aright else -1
-    best = run = 0
-    x = aleft - PLAYER_W
-    while x <= aright + 2:
-        if arc_lands(x, atop, vy0, RUN_SPEED * toward, b, obstacles):
-            run += 2
-            best = max(best, run)
-        else:
-            run = 0
-        x += 2
+    # Test BOTH run directions. Picking one from the platforms' relative
+    # positions is wrong whenever the target sits inside the launch
+    # platform's span -- it reported a 0px window for bales that are a
+    # plain hop, and Clyde had to shuffle geometry around the false alarm.
+    best = 0
+    for toward in (1, -1):
+        run = 0
+        x = aleft - PLAYER_W
+        while x <= aright + 2:
+            if arc_lands(x, atop, vy0, RUN_SPEED * toward, b, obstacles):
+                run += 2
+                best = max(best, run)
+            else:
+                run = 0
+            x += 2
     return best
 
 
@@ -214,6 +219,33 @@ def reachable(lv):
     return plats, seen, None, windows
 
 
+# The Captain's rule, encoded: a level has ONE way through, and the goal is
+# never something you can hop up to from the floor below it. Reachability
+# alone is the wrong invariant -- chasing it is exactly how Hopper House got
+# a staircase 300px from spawn that skipped 4,300px of level.
+SHORTCUT_MIN_DIST = 900.0  # a climb nearer the goal than this is a bypass
+
+
+def goal_entries(lv, plats, seen, goal_idx):
+    """Every platform BELOW the goal's platform that can jump onto it.
+
+    The intended design is exactly one such platform, far away -- the lift
+    at the far end of the level. Two of them, or one close to the goal, is
+    an alternate route.
+    """
+    g = plats[goal_idx]
+    out = []
+    for i, p in enumerate(plats):
+        if i == goal_idx or p[3] <= g[3]:
+            continue  # not below it
+        if not can_jump(p, g, obstacles=ceilings(plats, p, g)):
+            continue
+        gx = lv["goal"][0] if lv["goal"] else g[1]
+        dist = 0.0 if p[1] <= gx <= p[2] else min(abs(p[1] - gx), abs(p[2] - gx))
+        out.append((p[0], dist, i in seen))
+    return out
+
+
 def goal_reachable(lv, plats, seen):
     """The goal flag must stand on a platform the duck can actually get to.
     check_levels only proves the goal SITS on something -- which a stranded
@@ -231,7 +263,7 @@ def goal_reachable(lv, plats, seen):
         return False, f"goal {gx},{gy} has no platform under it"
     if best not in seen:
         return False, f"goal {gx},{gy} stands on {plats[best][0]}, which is unreachable"
-    return True, None
+    return True, best
 
 
 def main():
@@ -246,8 +278,14 @@ def main():
         stranded = [p for k, p in enumerate(plats) if k not in seen]
         tight = [(p, windows.get(k, 0)) for k, p in enumerate(plats)
                  if k in seen and windows.get(k, 999) < tight_limit(p[2] - p[1])]
-        goal_ok, goal_msg = goal_reachable(lv, plats, seen)
-        bad = bool(stranded or tight or err or not goal_ok)
+        goal_ok, goal_info = goal_reachable(lv, plats, seen)
+        goal_msg = None if goal_ok else goal_info
+        shortcuts = []
+        if goal_ok and isinstance(goal_info, int):
+            for label, dist, live in goal_entries(lv, plats, seen, goal_info):
+                if live and dist < SHORTCUT_MIN_DIST:
+                    shortcuts.append((label, dist))
+        bad = bool(stranded or tight or err or not goal_ok or shortcuts)
         print(f"{'BAD' if bad else 'OK '} {i + 1:>3} {lv['name']:<16} "
               f"width={lv['width']:<5} platforms={len(plats):<3} "
               f"stranded={len(stranded)} tight={len(tight)}")
@@ -255,6 +293,10 @@ def main():
             print(f"      !! {err}")
         if not goal_ok:
             print(f"      GOAL:     {goal_msg}")
+            problems += 1
+        for label, dist in shortcuts:
+            print(f"      SHORTCUT: {label} is {dist:.0f}px from the goal and can "
+                  f"jump straight onto its floor (want >= {SHORTCUT_MIN_DIST:.0f})")
             problems += 1
         for p in stranded:
             print(f"      STRANDED: {p[0]} top={p[3]}")

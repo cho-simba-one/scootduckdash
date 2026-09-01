@@ -1201,8 +1201,15 @@ export const LEVELS = [
     width: 5300,
     theme: THEMES.millDusk,
     ground: [[0, 700], [1100, 800], [2300, 400], [3100, 700], [3900, 1600], [5000, 300]],
-    ledges: [[360, 1560, 88], [700, 3800, 18], [3300, 120, 170]],
-    hay: [[300, 158], [1680, 158], [1800, 158]],
+    // ONE way up to the hall, and it is the lift at the far east end.
+    // The old 88 catwalk ran the length of the level one hop under the
+    // upstairs hall, so you could climb a bale beside the spawn and walk
+    // straight to a goal 4,300px of level early. The "downstairs hall" is
+    // now what the story always called it -- a short dead end with a hole
+    // in it, sitting 112px under the upstairs hall, which is more than a
+    // jump. Nothing but the lift touches the top floor.
+    ledges: [[360, 300, 130], [700, 3800, 18], [3300, 120, 170]],
+    hay: [[300, 180], [1680, 158], [1800, 158]],
     ponds: [[700, 1100], [1900, 2300], [2700, 3100]],
     lilies: [
       [760, 195], [860, 190], [960, 195], [1040, 195],
@@ -1217,11 +1224,13 @@ export const LEVELS = [
     bees: [[1200, 40, 220], [2000, 30, 180]],
     crows: [[1620, 35, 240], [4400, 35, 240]],
     beams: [[500, 90]],
-    pickups: [[980, -20, 'heart']],
+    // The heart is the dead end's payoff, not a freebie beside the flag.
+    pickups: [[500, 100, 'heart']],
     buildings: [],
     animals: [],
     goal: [980, -72],
-    saves: [[40, 200], [1700, 200], [1800, 58], [1200, -12], [3950, -12]],
+    // 1800,58 stood on the deleted catwalk; it sits on the bale now.
+    saves: [[40, 200], [1700, 200], [1800, 128], [1200, -12], [3950, -12]],
   },
   {
     name: 'Dead End East',
@@ -1463,3 +1472,9 @@ export const LEVELS = [
 
 export const LEVEL_COUNT = LEVELS.length;
 export const STAGE_NAMES = LEVELS.map((l) => l.name);
+// Numbered labels, defined ONCE here so the warp list, the intro card, the
+// HUD and the clear banner cannot drift into three different formats.
+// Zero-padded so the rows stay aligned in the warp list.
+export const STAGE_LABELS = LEVELS.map(
+  (l, i) => `${String(i + 1).padStart(2, '0')} ${l.name}`,
+);
