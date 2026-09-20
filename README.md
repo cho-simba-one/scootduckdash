@@ -1,5 +1,14 @@
 # Duck Scooter Dash
 
+## ▶ [Play it now](https://cho-simba-one.github.io/scootduckdash/)
+
+**https://cho-simba-one.github.io/scootduckdash/**
+
+One word, all lowercase — `scootduckdash`. GitHub Pages paths are
+case-sensitive, so `ScootDuckDash` and `scoot-duck-dash` both 404 even
+though the site is fine. Browsing this repo on github.com will only ever
+show you source code; use the link above to actually play.
+
 A Mario-style side-scroller demo starring a rubber ducky in a propeller hat,
 riding a kick scooter. Built as a phone-portable web game (plain HTML5 Canvas
 + JS — no framework lock-in, easy to wrap in Cordova/Capacitor later).
